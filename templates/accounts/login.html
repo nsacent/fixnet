@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="min-h-[80vh] flex items-center justify-center px-4 py-16">
+    <div class="w-full max-w-md bg-white border border-slate-200 rounded-3xl shadow-xl p-8">
+        <h1 class="text-3xl font-extrabold text-slate-900 text-center">
+            Login to FixNet
+        </h1>
+
+        <p class="mt-2 text-center text-slate-500">
+            Access your client or technician dashboard.
+        </p>
+
+        <form method="POST" class="mt-8 space-y-4">
+            {% csrf_token %}
+
+            <div>
+                <label class="text-sm font-bold text-slate-700">Username</label>
+                <input type="text" name="username" class="mt-2 w-full bg-slate-100 px-4 py-3 rounded-xl outline-none"
+                    required>
+            </div>
+
+            <div>
+                <label class="text-sm font-bold text-slate-700">Password</label>
+                <input type="password" name="password"
+                    class="mt-2 w-full bg-slate-100 px-4 py-3 rounded-xl outline-none" required>
+            </div>
+
+            {% if form.errors %}
+            <div class="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm">
+                Invalid username or password.
+            </div>
+            {% endif %}
+
+            <button class="w-full bg-blue-700 hover:bg-blue-800 text-white py-3 rounded-xl font-bold">
+                Login
+            </button>
+        </form>
+
+        <div class="mt-6 text-center text-sm text-slate-600">
+            <p>
+                New client?
+                <a href="{% url 'register_client' %}" class="text-blue-700 font-bold">
+                    Create account
+                </a>
+            </p>
+            <p class="mt-2">
+                Are you a technician?
+                <a href="{% url 'register_technician' %}" class="text-blue-700 font-bold">
+                    Register here
+                </a>
+            </p>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
