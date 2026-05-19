@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="min-h-[70vh] flex items-center justify-center px-4">
+    <div class="max-w-xl w-full bg-white border border-slate-200 rounded-3xl shadow-xl p-8 text-center">
+        <div
+            class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto text-3xl font-black">
+            ✓
+        </div>
+
+        <h1 class="mt-6 text-3xl font-extrabold text-slate-900">
+            Request submitted successfully
+        </h1>
+
+        <p class="mt-4 text-slate-600 leading-7">
+            Your networking issue has been received. A FixNet technician or admin will contact you shortly.
+        </p>
+
+        <a href="/"
+            class="inline-block mt-6 bg-blue-700 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-blue-800">
+            Back to Home
+        </a>
+    </div>
+</section>
+
+{% endblock %}

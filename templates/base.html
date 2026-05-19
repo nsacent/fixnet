@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>FixNet.co.ug</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Tailwind CDN for quick development -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-50 text-slate-900">
+
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="/" class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-xl bg-blue-700 text-white flex items-center justify-center font-bold">
+                    FN
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-xl">FixNet</h1>
+                    <p class="text-xs text-slate-500">fixnet.co.ug</p>
+                </div>
+            </a>
+
+            <div class="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-600">
+                <a href="/" class="hover:text-blue-700">Home</a>
+                <a href="#" class="hover:text-blue-700">Services</a>
+                <a href="#" class="hover:text-blue-700">Technicians</a>
+                <a href="/admin/" class="hover:text-blue-700">Admin</a>
+            </div>
+
+            <a href="#" class="bg-blue-700 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-blue-800">
+                Request Help
+            </a>
+        </div>
+    </nav>
+
+    {% block content %}
+    {% endblock %}
+
+</body>
+
+</html>
