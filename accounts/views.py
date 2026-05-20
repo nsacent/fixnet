@@ -15,7 +15,7 @@ class CustomLoginView(LoginView):
             return "/technician/dashboard/"
 
         if user.role == User.ROLE_ADMIN or user.is_superuser:
-            return "/admin/"
+            return "/dashboard/admin/"
 
         return "/client/dashboard/"
 

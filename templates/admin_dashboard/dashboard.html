@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="min-h-screen bg-slate-50 px-4 py-10">
+    <div class="max-w-7xl mx-auto">
+
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <p class="text-sm font-bold text-blue-700 uppercase tracking-[0.2em]">
+                    FixNet Admin
+                </p>
+
+                <h1 class="mt-2 text-3xl md:text-4xl font-extrabold text-slate-900">
+                    Control Center
+                </h1>
+
+                <p class="mt-2 text-slate-600">
+                    Monitor requests, technicians, clients, and platform activity.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+                <a href="/admin/"
+                    class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                    Django Admin
+                </a>
+
+                <a href="/admin/technicians/technicianprofile/"
+                    class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                    Verify Technicians
+                </a>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-5 mt-8">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Total Requests</p>
+                <h2 class="mt-2 text-3xl font-black">{{ total_requests }}</h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Pending Requests</p>
+                <h2 class="mt-2 text-3xl font-black text-amber-600">{{ pending_requests_count }}</h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Completed Jobs</p>
+                <h2 class="mt-2 text-3xl font-black text-emerald-600">{{ completed_requests_count }}</h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Technicians</p>
+                <h2 class="mt-2 text-3xl font-black">{{ total_technicians }}</h2>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-5 mt-5">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Accepted Jobs</p>
+                <h2 class="mt-2 text-3xl font-black text-blue-700">{{ accepted_requests_count }}</h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">In Progress</p>
+                <h2 class="mt-2 text-3xl font-black text-purple-700">{{ in_progress_requests_count }}</h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Verified Technicians</p>
+                <h2 class="mt-2 text-3xl font-black text-emerald-600">{{ verified_technicians }}</h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Unverified Technicians</p>
+                <h2 class="mt-2 text-3xl font-black text-red-600">{{ unverified_technicians }}</h2>
+            </div>
+        </div>
+
+        <div class="grid lg:grid-cols-[1.4fr_0.8fr] gap-6 mt-8">
+
+            <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-slate-200 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-extrabold">Latest Requests</h2>
+                        <p class="text-sm text-slate-500 mt-1">
+                            Recent client problems submitted to FixNet.
+                        </p>
+                    </div>
+
+                    <a href="/admin/requests_app/servicerequest/"
+                        class="text-sm font-bold text-blue-700 hover:text-blue-800">
+                        View all
+                    </a>
+                </div>
+
+                {% if latest_requests %}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-100 text-slate-600">
+                            <tr>
+                                <th class="px-5 py-4">Issue</th>
+                                <th class="px-5 py-4">Client</th>
+                                <th class="px-5 py-4">Location</th>
+                                <th class="px-5 py-4">Technician</th>
+                                <th class="px-5 py-4">Status</th>
+                                <th class="px-5 py-4">Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for item in latest_requests %}
+                            <tr class="border-t border-slate-200">
+                                <td class="px-5 py-4">
+                                    <p class="font-bold text-slate-900">{{ item.title }}</p>
+                                    <p class="text-xs text-slate-500 mt-1">
+                                        {% if item.category %}
+                                        {{ item.category.name }}
+                                        {% else %}
+                                        No category
+                                        {% endif %}
+                                    </p>
+                                </td>
+
+                                <td class="px-5 py-4">
+                                    {% if item.client %}
+                                    {{ item.client.username }}
+                                    {% elif item.client_name %}
+                                    {{ item.client_name }}
+                                    {% else %}
+                                    Public Client
+                                    {% endif %}
+                                </td>
+
+                                <td class="px-5 py-4">{{ item.location }}</td>
+
+                                <td class="px-5 py-4">
+                                    {% if item.assigned_technician %}
+                                    {{ item.assigned_technician.user.username }}
+                                    {% else %}
+                                    Not assigned
+                                    {% endif %}
+                                </td>
+
+                                <td class="px-5 py-4">
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700">
+                                        {{ item.get_status_display }}
+                                    </span>
+                                </td>
+
+                                <td class="px-5 py-4">
+                                    <div class="flex flex-col gap-2 items-start">
+                                        <a href="{% url 'admin_request_detail' item.id %}"
+                                            class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                                            View
+                                        </a>
+
+                                        {% if item.status == "pending" %}
+                                        <a href="{% url 'admin_assign_request' item.id %}"
+                                            class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                                            Assign
+                                        </a>
+                                        {% elif item.status == "assigned" %}
+                                        <span
+                                            class="bg-emerald-50 text-emerald-700 border border-emerald-100 px-4 py-2 rounded-xl text-xs font-bold">
+                                            Assigned
+                                        </span>
+                                        {% else %}
+                                        <span class="text-xs text-slate-400">
+                                            No action
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-8 text-center text-slate-500">
+                    No requests yet.
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-slate-200">
+                    <h2 class="text-xl font-extrabold">Technician Verification</h2>
+                    <p class="text-sm text-slate-500 mt-1">
+                        Latest technician profiles.
+                    </p>
+                </div>
+
+                {% if latest_technicians %}
+                <div class="divide-y divide-slate-200">
+                    {% for tech in latest_technicians %}
+                    <div class="p-5">
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <p class="font-extrabold text-slate-900">
+                                    {{ tech.user.username }}
+                                </p>
+
+                                <p class="text-sm text-slate-500 mt-1">
+                                    {{ tech.service_area }}
+                                </p>
+
+                                <p class="text-xs text-slate-400 mt-1">
+                                    {{ tech.skills|truncatechars:50 }}
+                                </p>
+                            </div>
+
+                            {% if tech.is_verified %}
+                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700">
+                                Verified
+                            </span>
+                            {% else %}
+                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700">
+                                Pending
+                            </span>
+                            {% endif %}
+                        </div>
+
+                        <a href="/admin/technicians/technicianprofile/{{ tech.id }}/change/"
+                            class="inline-block mt-3 text-xs font-bold text-blue-700 hover:text-blue-800">
+                            Review profile →
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-8 text-center text-slate-500">
+                    No technicians yet.
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-5 mt-8">
+            <a href="/admin/requests_app/servicerequest/"
+                class="bg-slate-900 text-white rounded-3xl p-6 hover:bg-slate-800">
+                <p class="text-sm text-slate-300">Manage</p>
+                <h3 class="mt-2 text-xl font-extrabold">Requests</h3>
+            </a>
+
+            <a href="/admin/technicians/technicianprofile/"
+                class="bg-blue-700 text-white rounded-3xl p-6 hover:bg-blue-800">
+                <p class="text-sm text-blue-100">Manage</p>
+                <h3 class="mt-2 text-xl font-extrabold">Technicians</h3>
+            </a>
+
+            <a href="/admin/accounts/user/"
+                class="bg-white border border-slate-200 text-slate-900 rounded-3xl p-6 hover:shadow-lg">
+                <p class="text-sm text-slate-500">Manage</p>
+                <h3 class="mt-2 text-xl font-extrabold">Users</h3>
+            </a>
+
+            <a href="/admin/services/servicecategory/"
+                class="bg-white border border-slate-200 text-slate-900 rounded-3xl p-6 hover:shadow-lg">
+                <p class="text-sm text-slate-500">Manage</p>
+                <h3 class="mt-2 text-xl font-extrabold">Services</h3>
+            </a>
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

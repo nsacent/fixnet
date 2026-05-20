@@ -64,6 +64,11 @@ class ServiceRequest(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
 
+    admin_notes = models.TextField(
+    blank=True,
+    help_text="Internal notes visible only to FixNet admin."
+    )
+
     location = models.CharField(max_length=200)
     phone_number = models.CharField(max_length=20)
 
@@ -90,6 +95,11 @@ class ServiceRequest(models.Model):
         decimal_places=2,
         default=0
     )
+
+    price_note = models.TextField(
+    blank=True,
+    help_text="Reason for final price change or pricing explanation."
+)
 
     final_price = models.DecimalField(
         max_digits=12,

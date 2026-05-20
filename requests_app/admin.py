@@ -24,12 +24,13 @@ class ServiceRequestAdmin(admin.ModelAdmin):
     )
 
     search_fields = (
-        "title",
-        "description",
-        "client__username",
-        "client_name",
-        "location",
-        "phone_number",
+    "title",
+    "description",
+    "admin_notes",
+    "client__username",
+    "client_name",
+    "location",
+    "phone_number",
     )
 
     readonly_fields = (

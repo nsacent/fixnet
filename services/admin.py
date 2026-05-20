@@ -4,7 +4,24 @@ from .models import ServiceCategory
 
 @admin.register(ServiceCategory)
 class ServiceCategoryAdmin(admin.ModelAdmin):
-    list_display = ("name", "slug", "icon", "is_active")
-    list_filter = ("is_active",)
-    search_fields = ("name", "description")
-    prepopulated_fields = {"slug": ("name",)}
+    list_display = (
+        "name",
+        "slug",
+        "starting_price",
+        "estimated_response_time",
+        "display_order",
+        "is_active",
+    )
+
+    list_filter = (
+        "is_active",
+    )
+
+    search_fields = (
+        "name",
+        "description",
+    )
+
+    prepopulated_fields = {
+        "slug": ("name",)
+    }

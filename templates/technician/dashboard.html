@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="min-h-screen bg-slate-50 px-4 py-10">
+    <div class="max-w-7xl mx-auto">
+
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <p class="text-sm font-bold text-blue-700 uppercase tracking-[0.2em]">
+                    Technician Dashboard
+                </p>
+                <h1 class="mt-2 text-3xl md:text-4xl font-extrabold text-slate-900">
+                    Welcome, {{ request.user.username }}
+                </h1>
+                <p class="mt-2 text-slate-600">
+                    View assigned jobs and pending networking requests.
+                </p>
+            </div>
+
+            <div class="flex gap-3">
+                <a href="{% url 'edit_technician_profile' %}"
+                    class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                    Edit Profile
+                </a>
+
+                <a href="/accounts/logout/"
+                    class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                    Logout
+                </a>
+            </div>
+        </div>
+
+        {% if technician_profile %}
+        {% if not technician_profile.is_verified %}
+        <div class="mt-8 bg-amber-50 border border-amber-100 text-amber-800 rounded-3xl p-6">
+            <h2 class="font-extrabold text-lg">Verification pending</h2>
+            <p class="mt-2 text-sm">
+                Your technician profile is not yet verified. You can view available jobs, but you cannot accept them
+                until FixNet admin approves your profile.
+            </p>
+        </div>
+        {% endif %}
+        <div class="grid md:grid-cols-4 gap-5 mt-8">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Verification</p>
+                <h2 class="mt-2 text-xl font-black">
+                    {% if technician_profile.is_verified %}
+                    Verified
+                    {% else %}
+                    Pending
+                    {% endif %}
+                </h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Rating</p>
+                <h2 class="mt-2 text-3xl font-black">{{ technician_profile.average_rating }}</h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Completed Jobs</p>
+                <h2 class="mt-2 text-3xl font-black">{{ technician_profile.completed_jobs }}</h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Service Area</p>
+                <h2 class="mt-2 text-xl font-black">{{ technician_profile.service_area }}</h2>
+            </div>
+        </div>
+        {% else %}
+        <div class="mt-8 bg-red-50 border border-red-100 text-red-700 rounded-3xl p-6">
+            No technician profile found. Please contact admin.
+        </div>
+        {% endif %}
+
+        <div class="grid lg:grid-cols-2 gap-6 mt-8">
+
+            <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-slate-200">
+                    <h2 class="text-xl font-extrabold">My Assigned Jobs</h2>
+                </div>
+
+                {% if assigned_requests %}
+                <div class="divide-y divide-slate-200">
+                    {% for item in assigned_requests %}
+                    <div class="p-6">
+                        <div class="flex justify-between gap-4">
+                            <div>
+                                <h3 class="font-extrabold text-slate-900">{{ item.title }}</h3>
+                                <p class="mt-1 text-sm text-slate-500">{{ item.description|truncatechars:90 }}</p>
+                                <p class="mt-2 text-sm text-slate-600">
+                                    {{ item.location }} • {{ item.phone_number }}
+                                </p>
+                            </div>
+                            <div class="flex flex-col gap-2 items-end">
+
+                                <a href="{% url 'technician_request_detail' item.id %}"
+                                    class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                                    View Job
+                                </a>
+
+                                <span class="h-fit px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700">
+                                    {{ item.get_status_display }}
+                                </span>
+
+                                {% if item.status == "assigned" %}
+                                <a href="{% url 'start_request' item.id %}"
+                                    class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                                    Start Job
+                                </a>
+                                {% elif item.status == "accepted" %}
+
+                                <a href="{% url 'start_request' item.id %}"
+                                    class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                                    Start Job
+                                </a>
+                                {% elif item.status == "in_progress" %}
+                                <a href="{% url 'complete_request' item.id %}"
+                                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                                    Mark Completed
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-8 text-center text-slate-500">
+                    No assigned jobs yet.
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-slate-200">
+                    <h2 class="text-xl font-extrabold">Pending Requests</h2>
+                    <p class="mt-1 text-sm text-slate-500">
+                        These are jobs waiting for assignment.
+                    </p>
+                </div>
+
+                {% if pending_requests %}
+                <div class="divide-y divide-slate-200">
+                    {% for item in pending_requests %}
+                    <div class="p-6">
+                        <div class="flex justify-between gap-4">
+                            <div>
+                                <h3 class="font-extrabold text-slate-900">{{ item.title }}</h3>
+                                <p class="mt-1 text-sm text-slate-500">{{ item.description|truncatechars:90 }}</p>
+                                <p class="mt-2 text-sm text-slate-600">
+                                    {{ item.location }} • Phone hidden until accepted
+                                </p>
+                            </div>
+
+                            <div class="flex flex-col gap-2 items-end">
+                                <span class="h-fit px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700">
+                                    {{ item.get_priority_display }}
+                                </span>
+
+                                <a href="{% url 'technician_request_detail' item.id %}"
+                                    class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                                    View Job
+                                </a>
+
+                                {% if technician_profile.is_verified %}
+                                <a href="{% url 'accept_request' item.id %}"
+                                    class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                                    Accept Job
+                                </a>
+                                {% else %}
+                                <span class="bg-slate-200 text-slate-500 px-4 py-2 rounded-xl text-xs font-bold">
+                                    Verification Required
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-8 text-center text-slate-500">
+                    No pending requests.
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

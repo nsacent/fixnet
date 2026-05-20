@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="min-h-screen bg-slate-50 px-4 py-10">
+    <div class="max-w-6xl mx-auto">
+
+        <div class="mb-6">
+            <a href="{% url 'admin_dashboard' %}" class="text-sm font-bold text-blue-700 hover:text-blue-800">
+                ← Back to Admin Dashboard
+            </a>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+
+            <div class="p-6 md:p-8 border-b border-slate-200">
+                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    <div>
+                        <p class="text-sm font-bold text-blue-700 uppercase tracking-[0.2em]">
+                            Admin Request Detail
+                        </p>
+
+                        <h1 class="mt-3 text-3xl md:text-4xl font-extrabold text-slate-900">
+                            {{ service_request.title }}
+                        </h1>
+
+                        <p class="mt-3 text-slate-600 leading-7">
+                            {{ service_request.description }}
+                        </p>
+                    </div>
+
+                    <div class="flex flex-col items-start md:items-end gap-3">
+                        <span class="px-4 py-2 rounded-full text-sm font-bold bg-blue-50 text-blue-700">
+                            {{ service_request.get_status_display }}
+                        </span>
+
+                        {% if service_request.status == "pending" %}
+                        <a href="{% url 'admin_assign_request' service_request.id %}"
+                            class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                            Assign Technician
+                        </a>
+                        {% elif service_request.status == "assigned" %}
+                        <a href="{% url 'admin_assign_request' service_request.id %}"
+                            class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                            Reassign Technician
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-5 p-6 md:p-8">
+
+                <div class="bg-slate-50 rounded-2xl p-5">
+                    <p class="text-sm text-slate-500">Client</p>
+                    <h3 class="mt-1 font-extrabold text-slate-900">
+                        {% if service_request.client %}
+                        {{ service_request.client.username }}
+                        {% elif service_request.client_name %}
+                        {{ service_request.client_name }}
+                        {% else %}
+                        Public Client
+                        {% endif %}
+                    </h3>
+                </div>
+
+                <div class="bg-slate-50 rounded-2xl p-5">
+                    <p class="text-sm text-slate-500">Phone</p>
+                    <h3 class="mt-1 font-extrabold text-slate-900">
+                        {{ service_request.phone_number }}
+                    </h3>
+
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <a href="tel:{{ service_request.phone_number }}"
+                            class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                            Call
+                        </a>
+
+                        <a href="https://wa.me/256{{ service_request.phone_number|slice:'-9:' }}" target="_blank"
+                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                            WhatsApp
+                        </a>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 rounded-2xl p-5">
+                    <p class="text-sm text-slate-500">Location</p>
+                    <h3 class="mt-1 font-extrabold text-slate-900">
+                        {{ service_request.location }}
+                    </h3>
+                </div>
+
+                <div class="bg-slate-50 rounded-2xl p-5">
+                    <p class="text-sm text-slate-500">Category</p>
+                    <h3 class="mt-1 font-extrabold text-slate-900">
+                        {% if service_request.category %}
+                        {{ service_request.category.name }}
+                        {% else %}
+                        Not selected
+                        {% endif %}
+                    </h3>
+                </div>
+
+                <div class="bg-slate-50 rounded-2xl p-5">
+                    <p class="text-sm text-slate-500">Priority</p>
+                    <h3 class="mt-1 font-extrabold text-slate-900">
+                        {{ service_request.get_priority_display }}
+                    </h3>
+                </div>
+
+                <div class="bg-slate-50 rounded-2xl p-5">
+                    <p class="text-sm text-slate-500">Submitted</p>
+                    <h3 class="mt-1 font-extrabold text-slate-900">
+                        {{ service_request.created_at|date:"M d, Y H:i" }}
+                    </h3>
+                </div>
+
+                <div class="bg-slate-50 rounded-2xl p-5">
+                    <p class="text-sm text-slate-500">Estimated Price</p>
+                    <h3 class="mt-1 font-extrabold text-slate-900">
+                        UGX {{ service_request.estimated_price|floatformat:0 }}
+                    </h3>
+                </div>
+
+
+                <div class="bg-slate-50 rounded-2xl p-5">
+                    <p class="text-sm text-slate-500">Final Price</p>
+                    <h3 class="mt-1 font-extrabold text-slate-900">
+                        UGX {{ service_request.final_price|floatformat:0 }}
+                    </h3>
+                </div>
+
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6 p-6 md:p-8 pt-0">
+
+                <div class="rounded-3xl border border-slate-200 p-6">
+                    <h2 class="text-xl font-extrabold text-slate-900">
+                        Assigned Technician
+                    </h2>
+
+                    {% if service_request.assigned_technician %}
+                    <div class="mt-5 flex items-center gap-4">
+                        <div
+                            class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black">
+                            {{ service_request.assigned_technician.user.username|slice:":2"|upper }}
+                        </div>
+
+                        <div>
+                            <h3 class="font-extrabold">
+                                {{ service_request.assigned_technician.user.username }}
+                            </h3>
+
+                            <p class="text-sm text-slate-500">
+                                {{ service_request.assigned_technician.service_area }}
+                            </p>
+
+                            <p class="mt-1 text-sm font-bold text-amber-500">
+                                ★ {{ service_request.assigned_technician.average_rating }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-5">
+                        <a href="{% url 'admin_assign_request' service_request.id %}"
+                            class="inline-block bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                            Reassign
+                        </a>
+                    </div>
+                    {% else %}
+                    <p class="mt-4 text-slate-500">
+                        No technician has been assigned yet.
+                    </p>
+
+                    <a href="{% url 'admin_assign_request' service_request.id %}"
+                        class="inline-block mt-5 bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                        Assign Technician
+                    </a>
+                    {% endif %}
+                </div>
+
+                <div class="rounded-3xl border border-slate-200 p-6">
+                    <h2 class="text-xl font-extrabold text-slate-900">
+                        Review
+                    </h2>
+
+                    {% if service_request.review %}
+                    <div class="mt-4 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-2xl p-4">
+                        <p class="font-bold">
+                            Rating: {{ service_request.review.rating }}/5
+                        </p>
+
+                        <p class="mt-2 text-sm">
+                            {{ service_request.review.comment }}
+                        </p>
+                    </div>
+                    {% else %}
+                    <p class="mt-4 text-slate-500">
+                        No review has been submitted yet.
+                    </p>
+                    {% endif %}
+                </div>
+
+            </div>
+
+
+            <div class="p-6 md:p-8 pt-0">
+                <div class="rounded-3xl border border-slate-200 p-6">
+                    <h2 class="text-xl font-extrabold text-slate-900">
+                        Admin Status Control
+                    </h2>
+
+                    <p class="mt-2 text-sm text-slate-500">
+                        Manually update the request status when admin intervention is needed.
+                    </p>
+
+                    <form method="POST" action="{% url 'admin_update_request_status' service_request.id %}"
+                        class="mt-6 grid md:grid-cols-[1fr_auto] gap-4 items-end">
+                        {% csrf_token %}
+
+                        <div>
+                            <label class="text-sm font-bold text-slate-700">
+                                Request Status
+                            </label>
+                            {{ status_form.status }}
+                        </div>
+
+                        <button class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-xl text-sm font-bold">
+                            Update Status
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+
+            <div class="p-6 md:p-8 pt-0">
+                <div class="rounded-3xl border border-slate-200 p-6">
+                    <h2 class="text-xl font-extrabold text-slate-900">
+                        Internal Admin Notes
+                    </h2>
+
+                    <p class="mt-2 text-sm text-slate-500">
+                        These notes are only visible to FixNet admin. Clients and technicians cannot see them.
+                    </p>
+
+                    <form method="POST" action="{% url 'admin_update_request_notes' service_request.id %}"
+                        class="mt-6 space-y-4">
+                        {% csrf_token %}
+
+                        <div>
+                            <label class="text-sm font-bold text-slate-700">
+                                Notes
+                            </label>
+                            {{ notes_form.admin_notes }}
+                        </div>
+
+                        <button
+                            class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl text-sm font-bold">
+                            Save Notes
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="p-6 md:p-8 pt-0">
+                <div class="rounded-3xl border border-slate-200 p-6">
+                    <h2 class="text-xl font-extrabold text-slate-900">
+                        Uploaded Image
+                    </h2>
+
+                    {% if service_request.image %}
+                    <img src="{{ service_request.image.url }}" alt="Request image"
+                        class="mt-5 rounded-2xl border border-slate-200 max-h-96 object-cover">
+                    {% else %}
+                    <p class="mt-4 text-slate-500">
+                        No image was uploaded for this request.
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="p-6 md:p-8 pt-0">
+                <div class="rounded-3xl bg-slate-50 p-6">
+                    <h2 class="text-xl font-extrabold text-slate-900">
+                        Status Timeline
+                    </h2>
+
+                    <div class="mt-6 space-y-4">
+
+                        <div class="flex gap-3">
+                            <div
+                                class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-bold">
+                                ✓
+                            </div>
+                            <div>
+                                <p class="font-bold">Request Submitted</p>
+                                <p class="text-sm text-slate-500">
+                                    {{ service_request.created_at|date:"M d, Y H:i" }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3">
+                            {% if service_request.assigned_technician %}
+                            <div
+                                class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-bold">
+                                ✓</div>
+                            {% else %}
+                            <div
+                                class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold">
+                                2</div>
+                            {% endif %}
+
+                            <div>
+                                <p class="font-bold">Technician Assigned</p>
+                                <p class="text-sm text-slate-500">
+                                    {% if service_request.assigned_technician %}
+                                    {{ service_request.assigned_technician.user.username }}
+                                    {% else %}
+                                    Waiting for assignment
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3">
+                            {% if service_request.status == "in_progress" or service_request.status == "completed" %}
+                            <div
+                                class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-bold">
+                                ✓</div>
+                            {% else %}
+                            <div
+                                class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold">
+                                3</div>
+                            {% endif %}
+
+                            <div>
+                                <p class="font-bold">In Progress</p>
+                                <p class="text-sm text-slate-500">
+                                    Technician is working on the job.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3">
+                            {% if service_request.status == "completed" %}
+                            <div
+                                class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-bold">
+                                ✓</div>
+                            {% else %}
+                            <div
+                                class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold">
+                                4</div>
+                            {% endif %}
+
+                            <div>
+                                <p class="font-bold">Completed</p>
+                                <p class="text-sm text-slate-500">
+                                    {% if service_request.completed_at %}
+                                    {{ service_request.completed_at|date:"M d, Y H:i" }}
+                                    {% else %}
+                                    Not completed yet
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

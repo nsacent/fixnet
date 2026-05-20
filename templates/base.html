@@ -28,7 +28,10 @@
                 <a href="/" class="hover:text-blue-700">Home</a>
                 <a href="#" class="hover:text-blue-700">Services</a>
                 <a href="#" class="hover:text-blue-700">Technicians</a>
-                <a href="/admin/" class="hover:text-blue-700">Admin</a>
+                {% if request.user.is_staff %}
+                <a href="{% url 'admin_dashboard' %}" class="hover:text-blue-700">Admin Dashboard</a>
+                {% endif %}
+                <a href="/admin/" class="hover:text-blue-700">Django Admin</a>
             </div>
 
             <a href="#" class="bg-blue-700 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-blue-800">
@@ -36,6 +39,24 @@
             </a>
         </div>
     </nav>
+
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 mt-4">
+        {% for message in messages %}
+        <div class="rounded-xl px-4 py-3 text-sm font-semibold
+                {% if message.tags == 'success' %}
+                    bg-emerald-50 text-emerald-700 border border-emerald-100
+                {% elif message.tags == 'error' %}
+                    bg-red-50 text-red-700 border border-red-100
+                {% else %}
+                    bg-blue-50 text-blue-700 border border-blue-100
+                {% endif %}
+            ">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
     {% block content %}
     {% endblock %}

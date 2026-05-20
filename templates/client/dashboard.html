@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="min-h-screen bg-slate-50 px-4 py-10">
+    <div class="max-w-7xl mx-auto">
+
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <p class="text-sm font-bold text-blue-700 uppercase tracking-[0.2em]">
+                    Client Dashboard
+                </p>
+                <h1 class="mt-2 text-3xl md:text-4xl font-extrabold text-slate-900">
+                    Welcome, {{ request.user.username }}
+                </h1>
+                <p class="mt-2 text-slate-600">
+                    Track your networking support requests and technician assignment.
+                </p>
+            </div>
+
+            <a href="/" class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                Request New Help
+            </a>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-5 mt-8">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Total Requests</p>
+                <h2 class="mt-2 text-3xl font-black">{{ requests.count }}</h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Pending</p>
+                <h2 class="mt-2 text-3xl font-black">
+                    {{ requests|dictsort:"status"|length }}
+                </h2>
+                <p class="mt-1 text-xs text-slate-400">All requests are shown below.</p>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Support Phone</p>
+                <h2 class="mt-2 text-xl font-black">FixNet Admin</h2>
+                <p class="mt-1 text-sm text-slate-500">Add phone later</p>
+            </div>
+        </div>
+
+        <div class="mt-8 bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-slate-200">
+                <h2 class="text-xl font-extrabold">My Requests</h2>
+            </div>
+
+            {% if requests %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-slate-100 text-slate-600">
+                        <tr>
+                            <th class="px-5 py-4">Issue</th>
+                            <th class="px-5 py-4">Category</th>
+                            <th class="px-5 py-4">Location</th>
+                            <th class="px-5 py-4">Technician</th>
+                            <th class="px-5 py-4">Status</th>
+                            <th class="px-5 py-4">Action</th>
+                            <th class="px-5 py-4">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in requests %}
+                        <tr class="border-t border-slate-200">
+                            <td class="px-5 py-4 font-bold text-slate-900">
+                                {{ item.title }}
+                                <p class="font-normal text-xs text-slate-500 mt-1">
+                                    {{ item.description|truncatechars:70 }}
+                                </p>
+                            </td>
+
+                            <td class="px-5 py-4">
+                                {% if item.category %}
+                                {{ item.category.name }}
+                                {% else %}
+                                Not selected
+                                {% endif %}
+                            </td>
+
+                            <td class="px-5 py-4">{{ item.location }}</td>
+
+                            <td class="px-5 py-4">
+                                {% if item.assigned_technician %}
+                                {{ item.assigned_technician.user.username }}
+                                {% else %}
+                                Not assigned
+                                {% endif %}
+                            </td>
+
+                            <td class="px-5 py-4">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700">
+                                    {{ item.get_status_display }}
+                                </span>
+                            </td>
+
+                            <td class="px-5 py-4">
+                                <div class="flex flex-col gap-2 items-start">
+                                    <a href="{% url 'client_request_detail' item.id %}"
+                                        class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                                        View
+                                    </a>
+
+                                    {% if item.status == "completed" and item.assigned_technician %}
+                                    {% if item.review %}
+                                    <span class="text-xs font-bold text-emerald-700">
+                                        Reviewed
+                                    </span>
+                                    {% else %}
+                                    <a href="{% url 'leave_review' item.id %}"
+                                        class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                                        Leave Review
+                                    </a>
+                                    {% endif %}
+                                    {% endif %}
+                                </div>
+                            </td>
+
+                            <td class="px-5 py-4 text-slate-500">
+                                {{ item.created_at|date:"M d, Y" }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-8 text-center">
+                <h3 class="font-extrabold text-lg">No requests yet</h3>
+                <p class="mt-2 text-slate-500">
+                    When you submit a networking issue, it will appear here.
+                </p>
+                <a href="/" class="inline-block mt-5 bg-blue-700 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                    Request Help
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}
