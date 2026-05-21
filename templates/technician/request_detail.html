@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 
 {% block content %}
 
@@ -146,7 +147,14 @@
                 <div class="bg-slate-50 rounded-2xl p-5">
                     <p class="text-sm text-slate-500">Estimated Price</p>
                     <h3 class="mt-1 font-extrabold text-slate-900">
-                        UGX {{ service_request.estimated_price|floatformat:0 }}
+                        UGX {{ service_request.estimated_price|floatformat:0|intcomma }}
+                    </h3>
+                </div>
+
+                <div class="bg-slate-50 rounded-2xl p-5">
+                    <p class="text-sm text-slate-500">Final Price</p>
+                    <h3 class="mt-1 font-extrabold text-slate-900">
+                        UGX {{ service_request.final_price|floatformat:0|intcomma }}
                     </h3>
                 </div>
 

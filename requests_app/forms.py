@@ -17,6 +17,10 @@ class ServiceRequestForm(forms.ModelForm):
         ]
 
         widgets = {
+            "client_name": forms.TextInput(attrs={
+                "class": "w-full bg-slate-100 text-slate-800 px-4 py-4 rounded-2xl outline-none text-sm",
+                "placeholder": "Your name"
+            }),
             "category": forms.Select(attrs={
                 "class": "w-full bg-slate-100 text-slate-800 px-4 py-4 rounded-2xl outline-none text-sm"
             }),
@@ -43,8 +47,24 @@ class ServiceRequestForm(forms.ModelForm):
             "priority": forms.Select(attrs={
                 "class": "w-full bg-slate-100 text-slate-800 px-4 py-4 rounded-2xl outline-none text-sm"
             }),
-            "client_name": forms.TextInput(attrs={
-                "class": "w-full bg-slate-100 text-slate-800 px-4 py-4 rounded-2xl outline-none text-sm",
-                "placeholder": "Your name"
-            }),
         }
+
+
+class ClientPaymentProofForm(forms.Form):
+    payment_proof = forms.ImageField(
+        required=True,
+        widget=forms.ClearableFileInput(attrs={
+            "class": "mt-2 w-full bg-white px-4 py-3 rounded-xl outline-none border border-slate-200"
+        })
+    )
+
+
+class CancelRequestForm(forms.Form):
+    cancellation_reason = forms.CharField(
+        required=True,
+        widget=forms.Textarea(attrs={
+            "class": "mt-2 w-full bg-slate-100 px-4 py-3 rounded-xl outline-none",
+            "rows": 4,
+            "placeholder": "Tell us why you want to cancel this request..."
+        })
+    )

@@ -38,12 +38,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "django.contrib.humanize",
 
     # FixNet apps
     'accounts',
     'services',
     'technicians',
-    'requests_app',
+    "requests_app.apps.RequestsAppConfig",
     'reviews.apps.ReviewsConfig',
     'core',
 ]

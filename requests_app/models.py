@@ -33,16 +33,16 @@ class ServiceRequest(models.Model):
     ]
 
     client = models.ForeignKey(
-    settings.AUTH_USER_MODEL,
-    on_delete=models.SET_NULL,
-    null=True,
-    blank=True,
-    related_name="service_requests"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="service_requests"
     )
 
     client_name = models.CharField(
-    max_length=150,
-    blank=True
+        max_length=150,
+        blank=True
     )
 
     category = models.ForeignKey(
@@ -65,8 +65,13 @@ class ServiceRequest(models.Model):
     description = models.TextField()
 
     admin_notes = models.TextField(
-    blank=True,
-    help_text="Internal notes visible only to FixNet admin."
+        blank=True,
+        help_text="Internal notes visible only to FixNet admin."
+    )
+
+    cancellation_reason = models.TextField(
+        blank=True,
+        help_text="Reason why this request was cancelled."
     )
 
     location = models.CharField(max_length=200)
@@ -99,13 +104,88 @@ class ServiceRequest(models.Model):
     price_note = models.TextField(
     blank=True,
     help_text="Reason for final price change or pricing explanation."
-)
+    )
 
     final_price = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=0
     )
+
+    PAYMENT_UNPAID = "unpaid"
+    PAYMENT_PARTIAL = "partial"
+    PAYMENT_PAID = "paid"
+
+    PAYMENT_STATUS_CHOICES = [
+        (PAYMENT_UNPAID, "Unpaid"),
+        (PAYMENT_PARTIAL, "Partially Paid"),
+        (PAYMENT_PAID, "Paid"),
+    ]
+
+    PAYMENT_CASH = "cash"
+    PAYMENT_MOBILE_MONEY = "mobile_money"
+    PAYMENT_BANK = "bank"
+    PAYMENT_OTHER = "other"
+
+    PAYMENT_METHOD_CHOICES = [
+        (PAYMENT_CASH, "Cash"),
+        (PAYMENT_MOBILE_MONEY, "Mobile Money"),
+        (PAYMENT_BANK, "Bank Transfer"),
+        (PAYMENT_OTHER, "Other"),
+    ]
+
+    payment_status = models.CharField(
+        max_length=20,
+        choices=PAYMENT_STATUS_CHOICES,
+        default=PAYMENT_UNPAID,
+    )
+
+    payment_method = models.CharField(
+        max_length=30,
+        choices=PAYMENT_METHOD_CHOICES,
+        blank=True,
+    )
+
+    amount_paid = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+    )
+
+    payment_note = models.TextField(
+        blank=True,
+        help_text="Internal payment note or transaction reference."
+    )
+
+    payment_proof = models.ImageField(
+        upload_to="payment_proofs/",
+        blank=True,
+        null=True,
+        help_text="Screenshot or receipt proof of payment."
+    )
+
+
+    PROOF_NOT_SUBMITTED = "not_submitted"
+    PROOF_PENDING = "pending"
+    PROOF_APPROVED = "approved"
+    PROOF_REJECTED = "rejected"
+
+    PAYMENT_PROOF_STATUS_CHOICES = [
+        (PROOF_NOT_SUBMITTED, "Not Submitted"),
+        (PROOF_PENDING, "Pending Review"),
+        (PROOF_APPROVED, "Approved"),
+        (PROOF_REJECTED, "Rejected"),
+    ]
+
+    payment_proof_status = models.CharField(
+        max_length=30,
+        choices=PAYMENT_PROOF_STATUS_CHOICES,
+        default=PROOF_NOT_SUBMITTED,
+    )
+
+    @property
+    def balance_due(self):
+        return max(self.final_price - self.amount_paid, 0)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -116,3 +196,58 @@ class ServiceRequest(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.client}"
+    
+
+class RequestActivity(models.Model):
+    ACTION_CREATED = "created"
+    ACTION_ASSIGNED = "assigned"
+    ACTION_ACCEPTED = "accepted"
+    ACTION_STARTED = "started"
+    ACTION_COMPLETED = "completed"
+    ACTION_STATUS_UPDATED = "status_updated"
+    ACTION_PAYMENT_UPDATED = "payment_updated"
+    ACTION_PROOF_UPLOADED = "proof_uploaded"
+    ACTION_NOTES_UPDATED = "notes_updated"
+    ACTION_PRICE_UPDATED = "price_updated"
+
+    ACTION_CHOICES = [
+        (ACTION_CREATED, "Created"),
+        (ACTION_ASSIGNED, "Assigned"),
+        (ACTION_ACCEPTED, "Accepted"),
+        (ACTION_STARTED, "Started"),
+        (ACTION_COMPLETED, "Completed"),
+        (ACTION_STATUS_UPDATED, "Status Updated"),
+        (ACTION_PAYMENT_UPDATED, "Payment Updated"),
+        (ACTION_PROOF_UPLOADED, "Proof Uploaded"),
+        (ACTION_NOTES_UPDATED, "Notes Updated"),
+        (ACTION_PRICE_UPDATED, "Price Updated"),
+    ]
+
+    service_request = models.ForeignKey(
+        ServiceRequest,
+        on_delete=models.CASCADE,
+        related_name="activities"
+    )
+
+    action = models.CharField(
+        max_length=50,
+        choices=ACTION_CHOICES
+    )
+
+    message = models.TextField()
+
+    performed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name_plural = "Request activities"
+
+    def __str__(self):
+        return f"{self.service_request.title} - {self.get_action_display()}"

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 
 {% block content %}
 
@@ -27,13 +28,22 @@
                         <p class="mt-3 text-slate-600 leading-7">
                             {{ service_request.description }}
                         </p>
-                    </div>
 
+                        {% if can_client_cancel %}
+                        <a href="{% url 'client_cancel_request' service_request.id %}"
+                            class="inline-block mt-4 bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                            Cancel Request
+                        </a>
+                        {% endif %}
+                    </div>
                     <span class="h-fit px-4 py-2 rounded-full text-sm font-bold bg-blue-50 text-blue-700">
                         {{ service_request.get_status_display }}
                     </span>
                 </div>
             </div>
+
+
+
 
             <div class="grid md:grid-cols-3 gap-5 p-6 md:p-8">
                 <div class="bg-slate-50 rounded-2xl p-5">
@@ -57,9 +67,18 @@
                 <div class="bg-slate-50 rounded-2xl p-5">
                     <p class="text-sm text-slate-500">Estimated Price</p>
                     <h3 class="mt-1 font-extrabold text-slate-900">
-                        UGX {{ service_request.estimated_price|floatformat:0 }}
+                        UGX {{ service_request.estimated_price|floatformat:0|intcomma }}
                     </h3>
                 </div>
+
+                {% if service_request.price_note %}
+                <div class="bg-blue-50 border border-blue-100 rounded-2xl p-5 md:col-span-3">
+                    <p class="text-sm font-bold text-blue-700">Price Note</p>
+                    <p class="mt-2 text-sm text-blue-800">
+                        {{ service_request.price_note }}
+                    </p>
+                </div>
+                {% endif %}
 
                 <div class="bg-slate-50 rounded-2xl p-5">
                     <p class="text-sm text-slate-500">Location</p>
@@ -92,6 +111,80 @@
                         {% endif %}
                     </h3>
                 </div>
+
+                <div class="bg-slate-50 rounded-2xl p-5">
+                    <p class="text-sm text-slate-500">Payment Status</p>
+                    <h3 class="mt-1 font-extrabold text-slate-900">
+                        {{ service_request.get_payment_status_display }}
+                    </h3>
+                </div>
+
+                <div class="bg-slate-50 rounded-2xl p-5">
+                    <p class="text-sm text-slate-500">Amount Paid</p>
+                    <h3 class="mt-1 font-extrabold text-emerald-700">
+                        UGX {{ service_request.amount_paid|floatformat:0|intcomma }}
+                    </h3>
+                </div>
+
+                <div class="bg-slate-50 rounded-2xl p-5">
+                    <p class="text-sm text-slate-500">Balance Due</p>
+                    <h3 class="mt-1 font-extrabold text-red-600">
+                        UGX {{ service_request.balance_due|floatformat:0|intcomma }}
+                    </h3>
+                </div>
+
+                <div class="bg-white border border-slate-200 rounded-3xl p-6 md:col-span-3">
+                    <h2 class="text-xl font-extrabold text-slate-900">
+                        Payment Proof
+                    </h2>
+
+                    <p class="mt-2 text-sm font-bold
+                        {% if service_request.payment_proof_status == 'approved' %}
+                            text-emerald-700
+                        {% elif service_request.payment_proof_status == 'rejected' %}
+                            text-red-600
+                        {% elif service_request.payment_proof_status == 'pending' %}
+                            text-amber-600
+                        {% else %}
+                            text-slate-500
+                        {% endif %}
+                    ">
+                        Proof Status: {{ service_request.get_payment_proof_status_display }}
+                    </p>
+
+                    {% if service_request.payment_proof %}
+                    <img src="{{ service_request.payment_proof.url }}" alt="Payment proof"
+                        class="mt-5 rounded-2xl border border-slate-200 max-h-80 object-cover">
+
+                    <a href="{% url 'client_upload_payment_proof' service_request.id %}"
+                        class="inline-block mt-5 bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                        Replace Proof
+                    </a>
+                    {% else %}
+                    <p class="mt-4 text-slate-500">
+                        No payment proof uploaded yet.
+                    </p>
+
+                    <a href="{% url 'client_upload_payment_proof' service_request.id %}"
+                        class="inline-block mt-5 bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                        Upload Payment Proof
+                    </a>
+                    {% endif %}
+                </div>
+
+
+                <!--{% if service_request.payment_proof %}
+                <div class="bg-white border border-slate-200 rounded-3xl p-6 md:col-span-3">
+                    <h2 class="text-xl font-extrabold text-slate-900">
+                        Payment Proof
+                    </h2>
+
+                    <img src="{{ service_request.payment_proof.url }}" alt="Payment proof"
+                        class="mt-5 rounded-2xl border border-slate-200 max-h-80 object-cover">
+                </div>
+                {% endif %}
+                -->
+
             </div>
 
             <div class="grid md:grid-cols-2 gap-6 p-6 md:p-8 pt-0">

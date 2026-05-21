@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 
 {% block content %}
 
@@ -77,6 +78,226 @@
             </div>
         </div>
 
+        <div class="grid md:grid-cols-4 gap-5 mt-5">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-slate-500">Proofs Pending</p>
+                        <h2 class="mt-2 text-3xl font-black text-amber-600">
+                            {{ pending_payment_proofs }}
+                        </h2>
+                    </div>
+
+                    <div
+                        class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-black">
+                        !
+                    </div>
+                </div>
+
+                <p class="mt-4 text-xs text-slate-400">
+                    Waiting for admin review
+                </p>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-slate-500">Approved Proofs</p>
+                        <h2 class="mt-2 text-3xl font-black text-emerald-600">
+                            {{ approved_payment_proofs }}
+                        </h2>
+                    </div>
+
+                    <div
+                        class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black">
+                        ✓
+                    </div>
+                </div>
+
+                <p class="mt-4 text-xs text-slate-400">
+                    Accepted by admin
+                </p>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-slate-500">Rejected Proofs</p>
+                        <h2 class="mt-2 text-3xl font-black text-red-600">
+                            {{ rejected_payment_proofs }}
+                        </h2>
+                    </div>
+
+                    <div
+                        class="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center font-black">
+                        ×
+                    </div>
+                </div>
+
+                <p class="mt-4 text-xs text-slate-400">
+                    Needs client correction
+                </p>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-slate-500">Not Submitted</p>
+                        <h2 class="mt-2 text-3xl font-black text-slate-700">
+                            {{ not_submitted_payment_proofs }}
+                        </h2>
+                    </div>
+
+                    <div
+                        class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center font-black">
+                        —
+                    </div>
+                </div>
+
+                <p class="mt-4 text-xs text-slate-400">
+                    No proof uploaded yet
+                </p>
+            </div>
+        </div>
+
+
+        <div class="grid md:grid-cols-4 gap-5 mt-5">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
+                <p class="text-sm text-slate-500">Total Final Value</p>
+                <h2 class="mt-2 text-2xl font-black text-slate-900">
+                    UGX {{ total_final_value|floatformat:0|intcomma }}
+                </h2>
+                <p class="mt-4 text-xs text-slate-400">
+                    Sum of all final prices
+                </p>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
+                <p class="text-sm text-slate-500">Amount Collected</p>
+                <h2 class="mt-2 text-2xl font-black text-emerald-600">
+                    UGX {{ total_amount_paid|floatformat:0|intcomma}}
+                </h2>
+                <p class="mt-4 text-xs text-slate-400">
+                    Total recorded payments
+                </p>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
+                <p class="text-sm text-slate-500">Outstanding Balance</p>
+                <h2 class="mt-2 text-2xl font-black text-red-600">
+                    UGX {{ outstanding_balance|floatformat:0|intcomma }}
+                </h2>
+                <p class="mt-4 text-xs text-slate-400">
+                    Final value minus amount paid
+                </p>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
+                <p class="text-sm text-slate-500">Paid Jobs</p>
+                <h2 class="mt-2 text-3xl font-black text-blue-700">
+                    {{ paid_jobs_count }}
+                </h2>
+                <p class="mt-4 text-xs text-slate-400">
+                    Jobs marked as fully paid
+                </p>
+            </div>
+        </div>
+
+
+        <div class="mt-8 bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-slate-200 flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-extrabold">Payment Proof Review Queue</h2>
+                    <p class="text-sm text-slate-500 mt-1">
+                        Uploaded payment proofs waiting for admin approval.
+                    </p>
+                </div>
+
+                <span class="bg-amber-50 text-amber-700 px-4 py-2 rounded-full text-xs font-bold">
+                    {{ pending_payment_proofs }} Pending
+                </span>
+            </div>
+
+            {% if pending_proof_requests %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-slate-100 text-slate-600">
+                        <tr>
+                            <th class="px-5 py-4">Request</th>
+                            <th class="px-5 py-4">Client</th>
+                            <th class="px-5 py-4">Final Price</th>
+                            <th class="px-5 py-4">Amount Paid</th>
+                            <th class="px-5 py-4">Proof</th>
+                            <th class="px-5 py-4">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in pending_proof_requests %}
+                        <tr class="border-t border-slate-200">
+                            <td class="px-5 py-4">
+                                <p class="font-bold text-slate-900">
+                                    {{ item.title }}
+                                </p>
+                                <p class="text-xs text-slate-500 mt-1">
+                                    {{ item.location }}
+                                </p>
+                            </td>
+
+                            <td class="px-5 py-4">
+                                {% if item.client %}
+                                {{ item.client.username }}
+                                {% elif item.client_name %}
+                                {{ item.client_name }}
+                                {% else %}
+                                Public Client
+                                {% endif %}
+                            </td>
+
+                            <td class="px-5 py-4 font-bold">
+                                UGX {{ item.final_price|floatformat:0|intcomma }}
+                            </td>
+
+                            <td class="px-5 py-4 font-bold text-emerald-700">
+                                UGX {{ item.amount_paid|floatformat:0|intcomma }}
+                            </td>
+
+                            <td class="px-5 py-4">
+                                {% if item.payment_proof %}
+                                <span class="bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-xs font-bold">
+                                    Pending Review
+                                </span>
+                                {% else %}
+                                <span class="text-xs text-slate-400">
+                                    No file
+                                </span>
+                                {% endif %}
+                            </td>
+
+                            <td class="px-5 py-4">
+                                <a href="{% url 'admin_request_detail' item.id %}"
+                                    class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                                    Review
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-8 text-center">
+                <h3 class="font-extrabold text-lg text-slate-900">
+                    No pending payment proofs
+                </h3>
+                <p class="mt-2 text-sm text-slate-500">
+                    Uploaded payment proofs waiting for review will appear here.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+
         <div class="grid lg:grid-cols-[1.4fr_0.8fr] gap-6 mt-8">
 
             <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
@@ -104,6 +325,7 @@
                                 <th class="px-5 py-4">Location</th>
                                 <th class="px-5 py-4">Technician</th>
                                 <th class="px-5 py-4">Status</th>
+                                <th class="px-5 py-4">Proof</th>
                                 <th class="px-5 py-4">Action</th>
                             </tr>
                         </thead>
@@ -146,6 +368,27 @@
                                     <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700">
                                         {{ item.get_status_display }}
                                     </span>
+                                </td>
+
+                                <td class="px-5 py-4">
+                                    {% if item.payment_proof_status == "pending" %}
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700">
+                                        Pending
+                                    </span>
+                                    {% elif item.payment_proof_status == "approved" %}
+                                    <span
+                                        class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700">
+                                        Approved
+                                    </span>
+                                    {% elif item.payment_proof_status == "rejected" %}
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700">
+                                        Rejected
+                                    </span>
+                                    {% else %}
+                                    <span class="text-xs text-slate-400">
+                                        None
+                                    </span>
+                                    {% endif %}
                                 </td>
 
                                 <td class="px-5 py-4">
