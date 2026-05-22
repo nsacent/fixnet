@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "requests_app.apps.RequestsAppConfig",
     'reviews.apps.ReviewsConfig',
     'core',
+    "notifications",
 ]
 
 MIDDLEWARE = [

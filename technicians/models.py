@@ -10,6 +10,22 @@ class TechnicianProfile(models.Model):
         ("expert", "Expert"),
     ]
 
+    AVAILABILITY_AVAILABLE = "available"
+    AVAILABILITY_BUSY = "busy"
+    AVAILABILITY_OFFLINE = "offline"
+
+    AVAILABILITY_CHOICES = [
+        (AVAILABILITY_AVAILABLE, "Available"),
+        (AVAILABILITY_BUSY, "Busy"),
+        (AVAILABILITY_OFFLINE, "Offline"),
+    ]
+
+    availability_status = models.CharField(
+        max_length=20,
+        choices=AVAILABILITY_CHOICES,
+        default=AVAILABILITY_AVAILABLE,
+    )
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -52,6 +68,12 @@ class TechnicianProfile(models.Model):
 
     created_at = models.DateTimeField(
         auto_now_add=True
+    )
+
+    profile_photo = models.ImageField(
+        upload_to="technician_profiles/",
+        blank=True,
+        null=True
     )
 
     def __str__(self):

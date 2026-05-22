@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="min-h-screen bg-slate-50 px-4 py-10">
+    <div class="max-w-6xl mx-auto">
+
+        <div class="mb-6">
+            <a href="javascript:history.back()" class="text-sm font-bold text-blue-700 hover:text-blue-800">
+                ← Back
+            </a>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+
+            <div class="p-6 md:p-8 border-b border-slate-200">
+                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+
+                    <div class="flex items-start gap-5">
+                        {% if technician_profile.profile_photo %}
+                        <img src="{{ technician_profile.profile_photo.url }}"
+                            alt="{{ technician_profile.user.username }}"
+                            class="w-20 h-20 rounded-3xl object-cover border border-slate-200">
+                        {% else %}
+                        <div
+                            class="w-20 h-20 rounded-3xl bg-slate-900 text-white flex items-center justify-center text-2xl font-black">
+                            {{ technician_profile.user.username|slice:":2"|upper }}
+                        </div>
+                        {% endif %}
+
+                        <div>
+                            <p class="text-sm font-bold text-blue-700 uppercase tracking-[0.2em]">
+                                Technician Profile
+                            </p>
+
+                            <h1 class="mt-2 text-3xl md:text-4xl font-extrabold text-slate-900">
+                                {{ technician_profile.user.username }}
+                            </h1>
+
+                            {% if technician_profile.business_name %}
+                            <p class="mt-2 text-lg font-bold text-slate-700">
+                                {{ technician_profile.business_name }}
+                            </p>
+                            {% endif %}
+
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                {% if technician_profile.is_verified %}
+                                <span
+                                    class="bg-emerald-50 text-emerald-700 border border-emerald-100 px-4 py-2 rounded-full text-xs font-bold">
+                                    Verified Technician
+                                </span>
+                                {% else %}
+                                <span
+                                    class="bg-amber-50 text-amber-700 border border-amber-100 px-4 py-2 rounded-full text-xs font-bold">
+                                    Verification Pending
+                                </span>
+                                {% endif %}
+
+                                <span
+                                    class="bg-blue-50 text-blue-700 border border-blue-100 px-4 py-2 rounded-full text-xs font-bold">
+                                    ★ {{ technician_profile.average_rating }}
+                                </span>
+
+                                <span class="bg-slate-100 text-slate-700 px-4 py-2 rounded-full text-xs font-bold">
+                                    {{ technician_profile.completed_jobs }} completed jobs
+                                </span>
+
+                                {% if technician_profile.availability_status == "available" %}
+                                <span
+                                    class="bg-emerald-50 text-emerald-700 border border-emerald-100 px-4 py-2 rounded-full text-xs font-bold">
+                                    Available
+                                </span>
+                                {% elif technician_profile.availability_status == "busy" %}
+                                <span
+                                    class="bg-amber-50 text-amber-700 border border-amber-100 px-4 py-2 rounded-full text-xs font-bold">
+                                    Busy
+                                </span>
+                                {% else %}
+                                <span
+                                    class="bg-slate-100 text-slate-600 border border-slate-200 px-4 py-2 rounded-full text-xs font-bold">
+                                    Offline
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if request.user == technician_profile.user %}
+                    <a href="{% url 'edit_technician_profile' %}"
+                        class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                        Edit Profile
+                    </a>
+                    {% endif %}
+
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-4 gap-5 p-6 md:p-8">
+                <div class="bg-slate-50 rounded-2xl p-5">
+                    <p class="text-sm text-slate-500">Service Area</p>
+                    <h3 class="mt-1 font-extrabold text-slate-900">
+                        {{ technician_profile.service_area|default:"Not set" }}
+                    </h3>
+                </div>
+
+                <div class="bg-slate-50 rounded-2xl p-5">
+                    <p class="text-sm text-slate-500">Experience</p>
+                    <h3 class="mt-1 font-extrabold text-slate-900">
+                        {{ technician_profile.get_experience_level_display }}
+                    </h3>
+                </div>
+
+                <div class="bg-slate-50 rounded-2xl p-5">
+                    <p class="text-sm text-slate-500">Rating</p>
+                    <h3 class="mt-1 font-extrabold text-amber-500">
+                        ★ {{ technician_profile.average_rating }}
+                    </h3>
+                </div>
+
+                <div class="bg-slate-50 rounded-2xl p-5">
+                    <p class="text-sm text-slate-500">Completed Jobs</p>
+                    <h3 class="mt-1 font-extrabold text-slate-900">
+                        {{ technician_profile.completed_jobs }}
+                    </h3>
+                </div>
+
+                <div class="bg-slate-50 rounded-2xl p-5">
+                    <p class="text-sm text-slate-500">Availability</p>
+                    <h3 class="mt-1 font-extrabold text-slate-900">
+                        {{ technician_profile.get_availability_status_display }}
+                    </h3>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6 p-6 md:p-8 pt-0">
+                <div class="rounded-3xl border border-slate-200 p-6">
+                    <h2 class="text-xl font-extrabold text-slate-900">
+                        Skills
+                    </h2>
+
+                    {% if technician_profile.skills %}
+                    <p class="mt-4 text-slate-600 leading-7">
+                        {{ technician_profile.skills }}
+                    </p>
+                    {% else %}
+                    <p class="mt-4 text-slate-500">
+                        Skills have not been added yet.
+                    </p>
+                    {% endif %}
+                </div>
+
+                <div class="rounded-3xl border border-slate-200 p-6">
+                    <h2 class="text-xl font-extrabold text-slate-900">
+                        Bio
+                    </h2>
+
+                    {% if technician_profile.bio %}
+                    <p class="mt-4 text-slate-600 leading-7">
+                        {{ technician_profile.bio }}
+                    </p>
+                    {% else %}
+                    <p class="mt-4 text-slate-500">
+                        Bio has not been added yet.
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="p-6 md:p-8 pt-0">
+                <div class="rounded-3xl border border-slate-200 overflow-hidden">
+                    <div class="p-6 border-b border-slate-200">
+                        <h2 class="text-xl font-extrabold text-slate-900">
+                            Recent Completed Jobs
+                        </h2>
+                        <p class="mt-1 text-sm text-slate-500">
+                            Latest completed work assigned to this technician.
+                        </p>
+                    </div>
+
+                    {% if completed_jobs %}
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-100 text-slate-600">
+                                <tr>
+                                    <th class="px-5 py-4">Job</th>
+                                    <th class="px-5 py-4">Category</th>
+                                    <th class="px-5 py-4">Location</th>
+                                    <th class="px-5 py-4">Completed</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for job in completed_jobs %}
+                                <tr class="border-t border-slate-200">
+                                    <td class="px-5 py-4">
+                                        <p class="font-bold text-slate-900">
+                                            {{ job.title }}
+                                        </p>
+                                        <p class="text-xs text-slate-500 mt-1">
+                                            {{ job.description|truncatechars:70 }}
+                                        </p>
+                                    </td>
+
+                                    <td class="px-5 py-4">
+                                        {% if job.category %}
+                                        {{ job.category.name }}
+                                        {% else %}
+                                        Not selected
+                                        {% endif %}
+                                    </td>
+
+                                    <td class="px-5 py-4">
+                                        {{ job.location }}
+                                    </td>
+
+                                    <td class="px-5 py-4 text-slate-500">
+                                        {% if job.completed_at %}
+                                        {{ job.completed_at|date:"M d, Y" }}
+                                        {% else %}
+                                        Not recorded
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="p-8 text-center">
+                        <h3 class="font-extrabold text-lg text-slate-900">
+                            No completed jobs yet
+                        </h3>
+                        <p class="mt-2 text-sm text-slate-500">
+                            Completed jobs will appear here after this technician finishes work.
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

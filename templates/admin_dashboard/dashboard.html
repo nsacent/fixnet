@@ -203,6 +203,129 @@
             </div>
         </div>
 
+        <div class="grid md:grid-cols-3 gap-5 mt-5">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
+                <p class="text-sm text-slate-500">Technician Earnings</p>
+                <h2 class="mt-2 text-2xl font-black text-slate-900">
+                    UGX {{ total_technician_earnings|floatformat:0|intcomma }}
+                </h2>
+                <p class="mt-4 text-xs text-slate-400">
+                    Total earnings calculated for technicians
+                </p>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
+                <p class="text-sm text-slate-500">Paid Out</p>
+                <h2 class="mt-2 text-2xl font-black text-blue-700">
+                    UGX {{ total_technician_paid_out|floatformat:0|intcomma }}
+                </h2>
+                <p class="mt-4 text-xs text-slate-400">
+                    Technician earnings already paid
+                </p>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
+                <p class="text-sm text-slate-500">Unpaid Technician Earnings</p>
+                <h2 class="mt-2 text-2xl font-black text-red-600">
+                    UGX {{ total_technician_unpaid|floatformat:0|intcomma }}
+                </h2>
+                <p class="mt-4 text-xs text-slate-400">
+                    Amount still owed to technicians
+                </p>
+            </div>
+        </div>
+
+        <div class="mt-8 bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+            <div
+                class="p-6 border-b border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                    <h2 class="text-xl font-extrabold">Technician Payout Queue</h2>
+                    <p class="text-sm text-slate-500 mt-1">
+                        Completed jobs with unpaid technician earnings.
+                    </p>
+                </div>
+
+                <span class="bg-red-50 text-red-700 px-4 py-2 rounded-full text-xs font-bold">
+                    UGX {{ total_technician_unpaid|floatformat:0|intcomma }} Unpaid
+                </span>
+            </div>
+
+            {% if unpaid_payout_requests %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-slate-100 text-slate-600">
+                        <tr>
+                            <th class="px-5 py-4">Job</th>
+                            <th class="px-5 py-4">Technician</th>
+                            <th class="px-5 py-4">Final Price</th>
+                            <th class="px-5 py-4">Earning</th>
+                            <th class="px-5 py-4">Completed</th>
+                            <th class="px-5 py-4">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in unpaid_payout_requests %}
+                        <tr class="border-t border-slate-200">
+                            <td class="px-5 py-4">
+                                <p class="font-bold text-slate-900">
+                                    {{ item.title }}
+                                </p>
+                                <p class="text-xs text-slate-500 mt-1">
+                                    {{ item.location }}
+                                </p>
+                            </td>
+
+                            <td class="px-5 py-4">
+                                {% if item.assigned_technician %}
+                                <a href="{% url 'technician_profile_detail' item.assigned_technician.id %}"
+                                    class="font-bold text-blue-700 hover:text-blue-800">
+                                    {{ item.assigned_technician.user.username }}
+                                </a>
+                                {% else %}
+                                Not assigned
+                                {% endif %}
+                            </td>
+
+                            <td class="px-5 py-4 font-bold">
+                                UGX {{ item.final_price|floatformat:0|intcomma }}
+                            </td>
+
+                            <td class="px-5 py-4 font-bold text-emerald-700">
+                                UGX {{ item.technician_earning|floatformat:0|intcomma }}
+                            </td>
+
+                            <td class="px-5 py-4 text-slate-500">
+                                {% if item.completed_at %}
+                                {{ item.completed_at|date:"M d, Y" }}
+                                {% else %}
+                                Not recorded
+                                {% endif %}
+                            </td>
+
+                            <td class="px-5 py-4">
+                                <a href="{% url 'admin_request_detail' item.id %}"
+                                    class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                                    Pay / Review
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-8 text-center">
+                <h3 class="font-extrabold text-lg text-slate-900">
+                    No unpaid technician payouts
+                </h3>
+                <p class="mt-2 text-sm text-slate-500">
+                    Completed jobs with unpaid technician earnings will appear here.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
 
         <div class="mt-8 bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
             <div class="p-6 border-b border-slate-200 flex justify-between items-center">
@@ -451,6 +574,18 @@
 
                                 <p class="text-xs text-slate-400 mt-1">
                                     {{ tech.skills|truncatechars:50 }}
+                                </p>
+
+                                <p class="text-xs font-bold mt-1
+                                    {% if tech.availability_status == 'available' %}
+                                        text-emerald-600
+                                    {% elif tech.availability_status == 'busy' %}
+                                        text-amber-600
+                                    {% else %}
+                                        text-slate-400
+                                    {% endif %}
+                                ">
+                                    {{ tech.get_availability_status_display }}
                                 </p>
                             </div>
 

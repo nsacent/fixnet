@@ -196,14 +196,22 @@
 
                     {% if service_request.assigned_technician %}
                     <div class="mt-5 flex items-center gap-4">
+                        {% if service_request.assigned_technician.profile_photo %}
+                        <img src="{{ service_request.assigned_technician.profile_photo.url }}"
+                            alt="{{ service_request.assigned_technician.user.username }}"
+                            class="w-14 h-14 rounded-2xl object-cover border border-slate-200">
+                        {% else %}
                         <div
                             class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black">
                             {{ service_request.assigned_technician.user.username|slice:":2"|upper }}
                         </div>
-
+                        {% endif %}
                         <div>
                             <h3 class="font-extrabold">
-                                {{ service_request.assigned_technician.user.username }}
+                                <a href="{% url 'technician_profile_detail' service_request.assigned_technician.id %}"
+                                    class="text-blue-700 hover:text-blue-800">
+                                    {{ service_request.assigned_technician.user.username }}
+                                </a>
                             </h3>
 
                             <p class="text-sm text-slate-500">

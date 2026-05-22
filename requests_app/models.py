@@ -112,6 +112,67 @@ class ServiceRequest(models.Model):
         default=0
     )
 
+    platform_commission_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=20,
+        help_text="Platform commission percentage."
+    )
+
+    platform_commission_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    technician_earning = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    PAYOUT_UNPAID = "unpaid"
+    PAYOUT_PAID = "paid"
+
+    PAYOUT_STATUS_CHOICES = [
+        (PAYOUT_UNPAID, "Unpaid"),
+        (PAYOUT_PAID, "Paid"),
+    ]
+
+    PAYOUT_CASH = "cash"
+    PAYOUT_MOBILE_MONEY = "mobile_money"
+    PAYOUT_BANK = "bank"
+    PAYOUT_OTHER = "other"
+
+    PAYOUT_METHOD_CHOICES = [
+        (PAYOUT_CASH, "Cash"),
+        (PAYOUT_MOBILE_MONEY, "Mobile Money"),
+        (PAYOUT_BANK, "Bank Transfer"),
+        (PAYOUT_OTHER, "Other"),
+    ]
+
+    technician_payout_status = models.CharField(
+        max_length=20,
+        choices=PAYOUT_STATUS_CHOICES,
+        default=PAYOUT_UNPAID,
+    )
+
+    technician_payout_method = models.CharField(
+        max_length=30,
+        choices=PAYOUT_METHOD_CHOICES,
+        blank=True,
+    )
+
+    technician_payout_note = models.TextField(
+        blank=True,
+        help_text="Internal payout note or transaction reference."
+    )
+
+    technician_payout_date = models.DateTimeField(
+        blank=True,
+        null=True,
+    )
+
     PAYMENT_UNPAID = "unpaid"
     PAYMENT_PARTIAL = "partial"
     PAYMENT_PAID = "paid"
@@ -182,6 +243,13 @@ class ServiceRequest(models.Model):
         choices=PAYMENT_PROOF_STATUS_CHOICES,
         default=PROOF_NOT_SUBMITTED,
     )
+
+    def calculate_earnings(self):
+        final_price = self.final_price or 0
+        commission_percent = self.platform_commission_percent or 0
+
+        self.platform_commission_amount = (final_price * commission_percent) / 100
+        self.technician_earning = final_price - self.platform_commission_amount
 
     @property
     def balance_due(self):

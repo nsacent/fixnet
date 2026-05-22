@@ -11,18 +11,21 @@ from reviews.forms import ReviewForm
 from reviews.models import Review
 from services.models import ServiceCategory
 
+from technicians.models import TechnicianProfile
 from technicians.forms import TechnicianProfileForm
+
 
 """Admins"""
 from django.contrib.admin.views.decorators import staff_member_required
 from accounts.models import User
-from technicians.models import TechnicianProfile
 from requests_app.admin_forms import (
     AssignTechnicianForm,
     UpdateRequestStatusForm,
     UpdateAdminNotesForm,
     UpdateFinalPriceForm,
     UpdatePaymentForm,
+    UpdateTechnicianPayoutForm,
+
 )
 
 def log_request_activity(service_request, action, message, user=None):
@@ -90,6 +93,12 @@ def technician_dashboard(request):
     technician_profile = getattr(request.user, "technician_profile", None)
 
     assigned_requests = ServiceRequest.objects.none()
+    total_technician_earnings = ServiceRequest.objects.filter(
+    assigned_technician=technician_profile,
+        status=ServiceRequest.STATUS_COMPLETED,
+    ).aggregate(
+        total=Sum("technician_earning")
+    )["total"] or 0
     pending_requests = ServiceRequest.objects.filter(
         status=ServiceRequest.STATUS_PENDING
     ).select_related("category", "client")
@@ -99,10 +108,23 @@ def technician_dashboard(request):
             assigned_technician=technician_profile
         ).select_related("category", "client")
 
+    paid_technician_earnings = ServiceRequest.objects.filter(
+        assigned_technician=technician_profile,
+        status=ServiceRequest.STATUS_COMPLETED,
+        technician_payout_status=ServiceRequest.PAYOUT_PAID,
+    ).aggregate(
+        total=Sum("technician_earning")
+    )["total"] or 0
+
+    unpaid_technician_earnings = total_technician_earnings - paid_technician_earnings
+
     return render(request, "technician/dashboard.html", {
         "technician_profile": technician_profile,
         "assigned_requests": assigned_requests,
         "pending_requests": pending_requests,
+        "total_technician_earnings": total_technician_earnings,
+        "paid_technician_earnings": paid_technician_earnings,
+        "unpaid_technician_earnings": unpaid_technician_earnings,
     })
 
 @login_required
@@ -251,8 +273,11 @@ def edit_technician_profile(request):
         return redirect("technician_dashboard")
 
     if request.method == "POST":
-        form = TechnicianProfileForm(request.POST, instance=technician_profile)
-
+        form = TechnicianProfileForm(
+            request.POST,
+            request.FILES,
+            instance=technician_profile
+        )
         if form.is_valid():
             form.save()
             messages.success(request, "Technician profile updated successfully.")
@@ -366,6 +391,29 @@ def admin_dashboard(request):
         payment_proof_status=ServiceRequest.PROOF_PENDING
     ).order_by("-updated_at")[:8]
 
+    unpaid_payout_requests = ServiceRequest.objects.select_related(
+        "category",
+        "client",
+        "assigned_technician",
+        "assigned_technician__user",
+    ).filter(
+        status=ServiceRequest.STATUS_COMPLETED,
+        technician_payout_status=ServiceRequest.PAYOUT_UNPAID,
+        technician_earning__gt=0,
+    ).order_by("-completed_at")[:10]
+
+    total_technician_earnings = ServiceRequest.objects.aggregate(
+        total=Sum("technician_earning")
+    )["total"] or 0
+
+    total_technician_paid_out = ServiceRequest.objects.filter(
+        technician_payout_status=ServiceRequest.PAYOUT_PAID
+    ).aggregate(
+        total=Sum("technician_earning")
+    )["total"] or 0
+
+    total_technician_unpaid = total_technician_earnings - total_technician_paid_out
+
     return render(request, "admin_dashboard/dashboard.html", {
         "total_requests": total_requests,
         "pending_requests_count": pending_requests_count,
@@ -387,6 +435,10 @@ def admin_dashboard(request):
         "outstanding_balance": outstanding_balance,
         "paid_jobs_count": paid_jobs_count,
         "pending_proof_requests": pending_proof_requests,
+        "unpaid_payout_requests": unpaid_payout_requests,
+        "total_technician_earnings": total_technician_earnings,
+        "total_technician_paid_out": total_technician_paid_out,
+        "total_technician_unpaid": total_technician_unpaid,
 
     })
 
@@ -455,6 +507,14 @@ def admin_request_detail(request, request_id):
     price_form = UpdateFinalPriceForm(initial={
         "final_price": service_request.final_price,
         "price_note": service_request.price_note,
+        "platform_commission_percent": service_request.platform_commission_percent,
+
+    })
+
+    payout_form = UpdateTechnicianPayoutForm(initial={
+        "technician_payout_status": service_request.technician_payout_status,
+        "technician_payout_method": service_request.technician_payout_method,
+        "technician_payout_note": service_request.technician_payout_note,
     })
 
     payment_form = UpdatePaymentForm(initial={
@@ -475,10 +535,10 @@ def admin_request_detail(request, request_id):
         "notes_form": notes_form,
         "price_form": price_form,
         "payment_form": payment_form,
+        "payout_form": payout_form,
         "activities": activities,
         "activities_count": activities.count(),
     })
-
 
 
 @staff_member_required
@@ -489,30 +549,42 @@ def admin_update_request_status(request, request_id):
         form = UpdateRequestStatusForm(request.POST)
 
         if form.is_valid():
+            old_status = service_request.status
             new_status = form.cleaned_data["status"]
 
             service_request.status = new_status
 
+            # If admin marks completed, set completed date
             if new_status == ServiceRequest.STATUS_COMPLETED and not service_request.completed_at:
                 service_request.completed_at = timezone.now()
 
+            # If admin moves away from completed, clear completed date
             if new_status != ServiceRequest.STATUS_COMPLETED:
                 service_request.completed_at = None
+
+            # If admin reopens a cancelled request, clear cancellation reason
+            if old_status == ServiceRequest.STATUS_CANCELLED and new_status != ServiceRequest.STATUS_CANCELLED:
+                service_request.cancellation_reason = ""
 
             service_request.save()
 
             log_request_activity(
                 service_request,
                 RequestActivity.ACTION_STATUS_UPDATED,
-                f"Admin updated request status to {service_request.get_status_display()}.",
+                f"Admin changed status from {old_status} to {new_status}.",
                 request.user,
             )
 
             messages.success(request, "Request status updated successfully.")
             return redirect("admin_request_detail", request_id=service_request.id)
 
+        messages.error(request, form.errors)
+
     messages.error(request, "Invalid status update.")
     return redirect("admin_request_detail", request_id=service_request.id)
+
+
+
 
 @staff_member_required
 def admin_update_final_price(request, request_id):
@@ -524,6 +596,8 @@ def admin_update_final_price(request, request_id):
         if form.is_valid():
             service_request.final_price = form.cleaned_data["final_price"]
             service_request.price_note = form.cleaned_data["price_note"]
+            service_request.platform_commission_percent = form.cleaned_data["platform_commission_percent"]
+            service_request.calculate_earnings()
             service_request.save()
 
             log_request_activity(
@@ -678,5 +752,63 @@ def admin_cancel_request(request, request_id):
 
     messages.success(request, "Request cancelled successfully.")
     return redirect("admin_request_detail", request_id=service_request.id)
+
+
+@login_required
+def technician_profile_detail(request, technician_id):
+    technician_profile = get_object_or_404(
+        TechnicianProfile.objects.select_related("user"),
+        id=technician_id,
+    )
+
+    completed_jobs = ServiceRequest.objects.filter(
+        assigned_technician=technician_profile,
+        status=ServiceRequest.STATUS_COMPLETED,
+    ).select_related(
+        "category",
+        "client",
+    ).order_by("-completed_at")[:10]
+
+    return render(request, "technician/profile_detail.html", {
+        "technician_profile": technician_profile,
+        "completed_jobs": completed_jobs,
+    })
+
+@staff_member_required
+def admin_update_technician_payout(request, request_id):
+    service_request = get_object_or_404(ServiceRequest, id=request_id)
+
+    if request.method == "POST":
+        form = UpdateTechnicianPayoutForm(request.POST)
+
+        if form.is_valid():
+            service_request.technician_payout_status = form.cleaned_data["technician_payout_status"]
+            service_request.technician_payout_method = form.cleaned_data["technician_payout_method"]
+            service_request.technician_payout_note = form.cleaned_data["technician_payout_note"]
+
+            if service_request.technician_payout_status == ServiceRequest.PAYOUT_PAID:
+                if not service_request.technician_payout_date:
+                    service_request.technician_payout_date = timezone.now()
+            else:
+                service_request.technician_payout_date = None
+
+            service_request.save()
+
+            log_request_activity(
+                service_request,
+                RequestActivity.ACTION_PAYMENT_UPDATED,
+                "Admin updated technician payout details.",
+                request.user,
+            )
+
+            messages.success(request, "Technician payout updated successfully.")
+            return redirect("admin_request_detail", request_id=service_request.id)
+
+        messages.error(request, form.errors)
+
+    messages.error(request, "Invalid technician payout update.")
+    return redirect("admin_request_detail", request_id=service_request.id)
+
+
 
 

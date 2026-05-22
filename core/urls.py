@@ -9,6 +9,7 @@ urlpatterns = [
     path("client/dashboard/", views.client_dashboard, name="client_dashboard"),
     path("technician/profile/edit/", views.edit_technician_profile, name="edit_technician_profile"),
     path("technician/dashboard/", views.technician_dashboard, name="technician_dashboard"),
+    path("technicians/<int:technician_id>/",views.technician_profile_detail,name="technician_profile_detail"),
 
     path("technician/requests/<int:request_id>/accept/", views.accept_request, name="accept_request"),
     path("technician/requests/<int:request_id>/start/", views.start_request, name="start_request"),
@@ -30,5 +31,7 @@ urlpatterns = [
     path("client/requests/<int:request_id>/cancel/", views.client_cancel_request, name="client_cancel_request"),
 
     path("dashboard/admin/requests/<int:request_id>/cancel/", views.admin_cancel_request, name="admin_cancel_request"),
+
+    path("dashboard/admin/requests/<int:request_id>/technician-payout/",views.admin_update_technician_payout,name="admin_update_technician_payout"),
     
 ]
