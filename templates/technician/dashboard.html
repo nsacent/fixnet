@@ -25,6 +25,11 @@
                     View Profile
                 </a>
 
+                <a href="{% url 'technician_job_history' %}"
+                    class="bg-white border border-slate-200 hover:shadow-md text-slate-900 px-5 py-3 rounded-xl text-sm font-bold">
+                    Job History
+                </a>
+
                 <a href="{% url 'edit_technician_profile' %}"
                     class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
                     Edit Profile
@@ -226,3 +231,11 @@
 </section>
 
 {% endblock %}
+
+<script>
+    setInterval(function () {
+        if (!document.hidden) {
+            window.location.reload();
+        }
+    }, 30000);
+</script>

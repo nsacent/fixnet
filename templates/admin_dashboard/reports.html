@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+
+<section class="min-h-screen bg-slate-50 px-4 py-10">
+    <div class="max-w-7xl mx-auto">
+
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <p class="text-sm font-bold text-blue-700 uppercase tracking-[0.2em]">
+                    Admin Reports
+                </p>
+
+                <h1 class="mt-2 text-3xl md:text-4xl font-extrabold text-slate-900">
+                    Finance & Reports Center
+                </h1>
+
+                <p class="mt-2 text-slate-600">
+                    Monitor revenue, collections, balances, commissions, payouts, and technician performance.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+
+                <button onclick="window.print()"
+                    class="bg-purple-700 hover:bg-purple-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                    Print Report
+                </button>
+
+                <a href="{% url 'admin_reports_export_excel' %}?date_filter={{ date_filter }}&start_date={{ start_date }}&end_date={{ end_date }}"
+                    class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                    Export Excel
+                </a>
+
+                <a href="{% url 'admin_reports_export_csv' %}?date_filter={{ date_filter }}&start_date={{ start_date }}&end_date={{ end_date }}"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                    Export CSV
+                </a>
+                <a href="{% url 'admin_dashboard' %}"
+                    class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                    Dashboard
+                </a>
+
+                <a href="{% url 'admin_request_list' %}"
+                    class="bg-white border border-slate-200 hover:shadow-md text-slate-900 px-5 py-3 rounded-xl text-sm font-bold">
+                    Manage Requests
+                </a>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-5 mt-8">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Total Requests</p>
+                <h2 class="mt-2 text-3xl font-black text-slate-900">
+                    {{ total_requests }}
+                </h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Completed Jobs</p>
+                <h2 class="mt-2 text-3xl font-black text-emerald-600">
+                    {{ completed_jobs_count }}
+                </h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Cancelled Jobs</p>
+                <h2 class="mt-2 text-3xl font-black text-red-600">
+                    {{ cancelled_jobs_count }}
+                </h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Pending Proofs</p>
+                <h2 class="mt-2 text-3xl font-black text-amber-600">
+                    {{ pending_payment_proofs }}
+                </h2>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-5 mt-5">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Total Final Value</p>
+                <h2 class="mt-2 text-2xl font-black text-slate-900">
+                    UGX {{ total_final_value|floatformat:0|intcomma }}
+                </h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Amount Collected</p>
+                <h2 class="mt-2 text-2xl font-black text-emerald-700">
+                    UGX {{ total_amount_paid|floatformat:0|intcomma }}
+                </h2>
+            </div>
+
+            <a href="{% url 'admin_outstanding_balances_report' %}"
+                class="block bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
+                <p class="text-sm text-slate-500">Outstanding Balance</p>
+                <h2 class="mt-2 text-2xl font-black text-red-600">
+                    UGX {{ outstanding_balance|floatformat:0|intcomma }}
+                </h2>
+                <p class="mt-4 text-xs text-slate-400">
+                    Click to view unpaid requests
+                </p>
+            </a>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Platform Commission</p>
+                <h2 class="mt-2 text-2xl font-black text-blue-700">
+                    UGX {{ total_platform_commission|floatformat:0|intcomma }}
+                </h2>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-5 mt-5">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Technician Earnings</p>
+                <h2 class="mt-2 text-2xl font-black text-slate-900">
+                    UGX {{ total_technician_earnings|floatformat:0|intcomma }}
+                </h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Paid Out</p>
+                <h2 class="mt-2 text-2xl font-black text-emerald-700">
+                    UGX {{ total_paid_out|floatformat:0|intcomma }}
+                </h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Unpaid Payouts</p>
+                <h2 class="mt-2 text-2xl font-black text-red-600">
+                    UGX {{ total_unpaid_payouts|floatformat:0|intcomma }}
+                </h2>
+            </div>
+        </div>
+
+        <div class="mt-8 bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-slate-200">
+                <h2 class="text-xl font-extrabold text-slate-900">
+                    Technician Earnings Report
+                </h2>
+                <p class="mt-1 text-sm text-slate-500">
+                    Completed jobs and earnings grouped by technician.
+                </p>
+            </div>
+
+            {% if technician_report %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-slate-100 text-slate-600">
+                        <tr>
+                            <th class="px-5 py-4">Technician</th>
+                            <th class="px-5 py-4">Completed Jobs</th>
+                            <th class="px-5 py-4">Job Value</th>
+                            <th class="px-5 py-4">Earnings</th>
+                            <th class="px-5 py-4">Paid Out</th>
+                            <th class="px-5 py-4">Unpaid</th>
+                            <th class="px-5 py-4">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in technician_report %}
+                        <tr class="border-t border-slate-200">
+                            <td class="px-5 py-4">
+                                <p class="font-bold text-slate-900">
+                                    {{ item.assigned_technician__user__username }}
+                                </p>
+                                <p class="text-xs text-slate-500 mt-1">
+                                    {{ item.assigned_technician__business_name|default:"No business name" }}
+                                </p>
+                            </td>
+
+                            <td class="px-5 py-4 font-bold">
+                                {{ item.completed_jobs }}
+                            </td>
+
+                            <td class="px-5 py-4 font-bold">
+                                UGX {{ item.total_job_value|default:0|floatformat:0|intcomma }}
+                            </td>
+
+                            <td class="px-5 py-4 font-bold text-emerald-700">
+                                UGX {{ item.total_earnings|default:0|floatformat:0|intcomma }}
+                            </td>
+
+                            <td class="px-5 py-4 font-bold text-blue-700">
+                                UGX {{ item.paid_out|default:0|floatformat:0|intcomma }}
+                            </td>
+
+                            <td class="px-5 py-4 font-bold text-red-600">
+                                UGX {{ item.unpaid|default:0|floatformat:0|intcomma }}
+                            </td>
+
+                            <td class="px-5 py-4">
+                                <a href="{% url 'technician_profile_detail' item.assigned_technician %}"
+                                    class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                                    View Profile
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-10 text-center">
+                <h3 class="font-extrabold text-lg text-slate-900">
+                    No technician earnings yet
+                </h3>
+                <p class="mt-2 text-sm text-slate-500">
+                    Completed jobs with technician earnings will appear here.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+
+        <div class="mt-8 bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-slate-200">
+                <h2 class="text-xl font-extrabold text-slate-900">
+                    Client Balances Report
+                </h2>
+                <p class="mt-1 text-sm text-slate-500">
+                    Client billing overview based on final price and amount paid.
+                </p>
+            </div>
+
+            {% if client_balances %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-slate-100 text-slate-600">
+                        <tr>
+                            <th class="px-5 py-4">Client</th>
+                            <th class="px-5 py-4">Phone</th>
+                            <th class="px-5 py-4">Requests</th>
+                            <th class="px-5 py-4">Final Value</th>
+                            <th class="px-5 py-4">Paid</th>
+                            <th class="px-5 py-4">Balance</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in client_balances %}
+                        <tr class="border-t border-slate-200">
+                            <td class="px-5 py-4">
+                                {% if item.client__username %}
+                                {{ item.client__username }}
+                                {% elif item.client_name %}
+                                {{ item.client_name }}
+                                {% else %}
+                                Public Client
+                                {% endif %}
+                            </td>
+
+                            <td class="px-5 py-4">
+                                {{ item.phone_number|default:"Not recorded" }}
+                            </td>
+
+                            <td class="px-5 py-4 font-bold">
+                                {{ item.total_requests }}
+                            </td>
+
+                            <td class="px-5 py-4 font-bold">
+                                UGX {{ item.total_final_value|default:0|floatformat:0|intcomma }}
+                            </td>
+
+                            <td class="px-5 py-4 font-bold text-emerald-700">
+                                UGX {{ item.total_paid|default:0|floatformat:0|intcomma }}
+                            </td>
+
+                            <td class="px-5 py-4 font-bold text-red-600">
+                                UGX {{ item.balance|default:0|floatformat:0|intcomma }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-10 text-center">
+                <h3 class="font-extrabold text-lg text-slate-900">
+                    No client balances yet
+                </h3>
+                <p class="mt-2 text-sm text-slate-500">
+                    Client billing records will appear here.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}
+
+<style>
+    @media print {
+        body {
+            background: white !important;
+        }
+
+        nav,
+        header,
+        footer,
+        .print\:hidden {
+            display: none !important;
+        }
+
+        section {
+            background: white !important;
+            padding: 0 !important;
+        }
+
+        .shadow-sm,
+        .shadow-xl {
+            box-shadow: none !important;
+        }
+
+        .rounded-3xl {
+            border-radius: 12px !important;
+        }
+
+        table {
+            page-break-inside: auto;
+        }
+
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+    }
+</style>

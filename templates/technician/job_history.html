@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+
+<section class="min-h-screen bg-slate-50 px-4 py-10">
+    <div class="max-w-7xl mx-auto">
+
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <p class="text-sm font-bold text-blue-700 uppercase tracking-[0.2em]">
+                    Technician Jobs
+                </p>
+
+                <h1 class="mt-2 text-3xl md:text-4xl font-extrabold text-slate-900">
+                    Job History
+                </h1>
+
+                <p class="mt-2 text-slate-600">
+                    Track your assigned jobs, completed work, earnings, and payout status.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'technician_dashboard' %}"
+                    class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                    Dashboard
+                </a>
+
+                <a href="{% url 'technician_profile_detail' technician_profile.id %}"
+                    class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                    View Profile
+                </a>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-5 gap-5 mt-8">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Total Jobs</p>
+                <h2 class="mt-2 text-3xl font-black text-slate-900">
+                    {{ jobs.count }}
+                </h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Active Jobs</p>
+                <h2 class="mt-2 text-3xl font-black text-blue-700">
+                    {{ active_jobs_count }}
+                </h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Completed</p>
+                <h2 class="mt-2 text-3xl font-black text-emerald-600">
+                    {{ completed_jobs_count }}
+                </h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Paid Earnings</p>
+                <h2 class="mt-2 text-2xl font-black text-emerald-700">
+                    UGX {{ paid_earnings|floatformat:0|intcomma }}
+                </h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Unpaid Earnings</p>
+                <h2 class="mt-2 text-2xl font-black text-red-600">
+                    UGX {{ unpaid_earnings|floatformat:0|intcomma }}
+                </h2>
+            </div>
+        </div>
+
+        <div class="mt-8 bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-slate-200">
+                <h2 class="text-xl font-extrabold text-slate-900">
+                    All Assigned Jobs
+                </h2>
+                <p class="mt-1 text-sm text-slate-500">
+                    Every job assigned to you through FixNet.
+                </p>
+            </div>
+
+            {% if jobs %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-slate-100 text-slate-600">
+                        <tr>
+                            <th class="px-5 py-4">Job</th>
+                            <th class="px-5 py-4">Category</th>
+                            <th class="px-5 py-4">Location</th>
+                            <th class="px-5 py-4">Status</th>
+                            <th class="px-5 py-4">Final Price</th>
+                            <th class="px-5 py-4">My Earning</th>
+                            <th class="px-5 py-4">Payout</th>
+                            <th class="px-5 py-4">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for job in jobs %}
+                        <tr class="border-t border-slate-200">
+                            <td class="px-5 py-4">
+                                <p class="font-bold text-slate-900">
+                                    {{ job.title }}
+                                </p>
+                                <p class="text-xs text-slate-500 mt-1">
+                                    {{ job.description|truncatechars:70 }}
+                                </p>
+                            </td>
+
+                            <td class="px-5 py-4">
+                                {% if job.category %}
+                                {{ job.category.name }}
+                                {% else %}
+                                Not selected
+                                {% endif %}
+                            </td>
+
+                            <td class="px-5 py-4">
+                                {{ job.location }}
+                            </td>
+
+                            <td class="px-5 py-4">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700">
+                                    {{ job.get_status_display }}
+                                </span>
+                            </td>
+
+                            <td class="px-5 py-4 font-bold">
+                                UGX {{ job.final_price|floatformat:0|intcomma }}
+                            </td>
+
+                            <td class="px-5 py-4 font-bold text-emerald-700">
+                                UGX {{ job.technician_earning|floatformat:0|intcomma }}
+                            </td>
+
+                            <td class="px-5 py-4">
+                                {% if job.technician_payout_status == "paid" %}
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700">
+                                    Paid
+                                </span>
+                                {% else %}
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700">
+                                    Unpaid
+                                </span>
+                                {% endif %}
+                            </td>
+
+                            <td class="px-5 py-4">
+                                <a href="{% url 'technician_request_detail' job.id %}"
+                                    class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-10 text-center">
+                <h3 class="font-extrabold text-lg text-slate-900">
+                    No jobs assigned yet
+                </h3>
+                <p class="mt-2 text-sm text-slate-500">
+                    Your assigned jobs will appear here.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

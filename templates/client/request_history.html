@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+
+<section class="min-h-screen bg-slate-50 px-4 py-10">
+    <div class="max-w-7xl mx-auto">
+
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <p class="text-sm font-bold text-blue-700 uppercase tracking-[0.2em]">
+                    Client Requests
+                </p>
+
+                <h1 class="mt-2 text-3xl md:text-4xl font-extrabold text-slate-900">
+                    Request History
+                </h1>
+
+                <p class="mt-2 text-slate-600">
+                    Track all your service requests, payment status, balances, and reviews.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'client_dashboard' %}"
+                    class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                    Dashboard
+                </a>
+
+                <a href="{% url 'home' %}"
+                    class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                    New Request
+                </a>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-5 mt-8">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Total Requests</p>
+                <h2 class="mt-2 text-3xl font-black text-slate-900">
+                    {{ requests_qs.count }}
+                </h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Active</p>
+                <h2 class="mt-2 text-3xl font-black text-blue-700">
+                    {{ active_requests_count }}
+                </h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Completed</p>
+                <h2 class="mt-2 text-3xl font-black text-emerald-600">
+                    {{ completed_requests_count }}
+                </h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Cancelled</p>
+                <h2 class="mt-2 text-3xl font-black text-red-600">
+                    {{ cancelled_requests_count }}
+                </h2>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-5 mt-5">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Total Final Value</p>
+                <h2 class="mt-2 text-2xl font-black text-slate-900">
+                    UGX {{ total_final_value|floatformat:0|intcomma }}
+                </h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Amount Paid</p>
+                <h2 class="mt-2 text-2xl font-black text-emerald-700">
+                    UGX {{ total_amount_paid|floatformat:0|intcomma }}
+                </h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Balance Due</p>
+                <h2 class="mt-2 text-2xl font-black text-red-600">
+                    UGX {{ total_balance|floatformat:0|intcomma }}
+                </h2>
+            </div>
+        </div>
+
+        <div class="mt-8 bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-slate-200">
+                <h2 class="text-xl font-extrabold text-slate-900">
+                    All My Requests
+                </h2>
+                <p class="mt-1 text-sm text-slate-500">
+                    Full history of requests you submitted through FixNet.
+                </p>
+            </div>
+
+            {% if requests_qs %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-slate-100 text-slate-600">
+                        <tr>
+                            <th class="px-5 py-4">Request</th>
+                            <th class="px-5 py-4">Technician</th>
+                            <th class="px-5 py-4">Status</th>
+                            <th class="px-5 py-4">Final Price</th>
+                            <th class="px-5 py-4">Paid</th>
+                            <th class="px-5 py-4">Balance</th>
+                            <th class="px-5 py-4">Proof</th>
+                            <th class="px-5 py-4">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in requests_qs %}
+                        <tr class="border-t border-slate-200">
+                            <td class="px-5 py-4">
+                                <p class="font-bold text-slate-900">
+                                    {{ item.title }}
+                                </p>
+
+                                <p class="text-xs text-slate-500 mt-1">
+                                    {% if item.category %}
+                                    {{ item.category.name }}
+                                    {% else %}
+                                    No category
+                                    {% endif %}
+                                    · {{ item.created_at|date:"M d, Y" }}
+                                </p>
+                            </td>
+
+                            <td class="px-5 py-4">
+                                {% if item.assigned_technician %}
+                                <a href="{% url 'technician_profile_detail' item.assigned_technician.id %}"
+                                    class="font-bold text-blue-700 hover:text-blue-800">
+                                    {{ item.assigned_technician.user.username }}
+                                </a>
+                                {% else %}
+                                Not assigned
+                                {% endif %}
+                            </td>
+
+                            <td class="px-5 py-4">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold
+                                            {% if item.status == 'completed' %}
+                                                bg-emerald-50 text-emerald-700
+                                            {% elif item.status == 'cancelled' %}
+                                                bg-red-50 text-red-700
+                                            {% elif item.status == 'in_progress' %}
+                                                bg-purple-50 text-purple-700
+                                            {% else %}
+                                                bg-blue-50 text-blue-700
+                                            {% endif %}
+                                        ">
+                                    {{ item.get_status_display }}
+                                </span>
+                            </td>
+
+                            <td class="px-5 py-4 font-bold">
+                                UGX {{ item.final_price|floatformat:0|intcomma }}
+                            </td>
+
+                            <td class="px-5 py-4 font-bold text-emerald-700">
+                                UGX {{ item.amount_paid|floatformat:0|intcomma }}
+                            </td>
+
+                            <td class="px-5 py-4 font-bold text-red-600">
+                                UGX {{ item.balance_due|floatformat:0|intcomma }}
+                            </td>
+
+                            <td class="px-5 py-4">
+                                {% if item.payment_proof_status == "pending" %}
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700">
+                                    Pending
+                                </span>
+                                {% elif item.payment_proof_status == "approved" %}
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700">
+                                    Approved
+                                </span>
+                                {% elif item.payment_proof_status == "rejected" %}
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700">
+                                    Rejected
+                                </span>
+                                {% else %}
+                                <span class="text-xs text-slate-400">
+                                    None
+                                </span>
+                                {% endif %}
+                            </td>
+
+                            <td class="px-5 py-4">
+                                <div class="flex flex-col gap-2 items-start">
+                                    <a href="{% url 'client_request_detail' item.id %}"
+                                        class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                                        View
+                                    </a>
+
+                                    {% if item.status == "completed" and not item.review %}
+                                    <a href="{% url 'leave_review' item.id %}"
+                                        class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                                        Review
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-10 text-center">
+                <h3 class="font-extrabold text-lg text-slate-900">
+                    No requests yet
+                </h3>
+                <p class="mt-2 text-sm text-slate-500">
+                    Your submitted requests will appear here.
+                </p>
+
+                <a href="{% url 'home' %}"
+                    class="inline-block mt-5 bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                    Submit First Request
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

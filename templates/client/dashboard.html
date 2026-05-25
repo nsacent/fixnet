@@ -16,11 +16,25 @@
                 <p class="mt-2 text-slate-600">
                     Track your networking support requests and technician assignment.
                 </p>
+
             </div>
 
-            <a href="/" class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
-                Request New Help
-            </a>
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'client_request_history' %}"
+                    class="bg-white border border-slate-200 hover:shadow-md text-slate-900 px-5 py-3 rounded-xl text-sm font-bold">
+                    Request History
+                </a>
+
+                <a href="{% url 'home' %}"
+                    class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                    New Request
+                </a>
+
+                <a href="/accounts/logout/"
+                    class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                    Logout
+                </a>
+            </div>
         </div>
 
         <div class="grid md:grid-cols-3 gap-5 mt-8">
@@ -42,6 +56,10 @@
                 <h2 class="mt-2 text-xl font-black">FixNet Admin</h2>
                 <p class="mt-1 text-sm text-slate-500">Add phone later</p>
             </div>
+            <a href="{% url 'client_request_history' %}"
+                class="bg-white border border-slate-200 hover:shadow-md text-slate-900 px-5 py-3 rounded-xl text-sm font-bold">
+                Request History
+            </a>
         </div>
 
         <div class="mt-8 bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">

@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+
+<section class="min-h-screen bg-slate-50 px-4 py-10">
+    <div class="max-w-7xl mx-auto">
+
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <p class="text-sm font-bold text-red-700 uppercase tracking-[0.2em]">
+                    Admin Reports
+                </p>
+
+                <h1 class="mt-2 text-3xl md:text-4xl font-extrabold text-slate-900">
+                    Outstanding Balances
+                </h1>
+
+                <p class="mt-2 text-slate-600">
+                    Requests where clients still have unpaid balances.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'admin_reports' %}"
+                    class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                    Back to Reports
+                </a>
+
+                <a href="{% url 'admin_request_list' %}"
+                    class="bg-white border border-slate-200 hover:shadow-md text-slate-900 px-5 py-3 rounded-xl text-sm font-bold">
+                    Manage Requests
+                </a>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-5 mt-8">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-500">Outstanding Requests</p>
+                <h2 class="mt-2 text-3xl font-black text-red-600">
+                    {{ outstanding_requests|length }}
+                </h2>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm md:col-span-2">
+                <p class="text-sm text-slate-500">Total Outstanding Balance</p>
+                <h2 class="mt-2 text-3xl font-black text-red-600">
+                    UGX {{ total_outstanding|floatformat:0|intcomma }}
+                </h2>
+            </div>
+        </div>
+
+        <div class="mt-8 bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-slate-200">
+                <h2 class="text-xl font-extrabold text-slate-900">
+                    Outstanding Request List
+                </h2>
+                <p class="mt-1 text-sm text-slate-500">
+                    Follow up these clients for remaining payment.
+                </p>
+            </div>
+
+            {% if outstanding_requests %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-slate-100 text-slate-600">
+                        <tr>
+                            <th class="px-5 py-4">Request</th>
+                            <th class="px-5 py-4">Client</th>
+                            <th class="px-5 py-4">Phone</th>
+                            <th class="px-5 py-4">Final Price</th>
+                            <th class="px-5 py-4">Paid</th>
+                            <th class="px-5 py-4">Balance</th>
+                            <th class="px-5 py-4">Payment</th>
+                            <th class="px-5 py-4">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for row in outstanding_requests %}
+                        <tr class="border-t border-slate-200">
+                            <td class="px-5 py-4">
+                                <p class="font-bold text-slate-900">
+                                    {{ row.request.title }}
+                                </p>
+                                <p class="text-xs text-slate-500 mt-1">
+                                    {{ row.request.location }}
+                                </p>
+                            </td>
+
+                            <td class="px-5 py-4">
+                                {% if row.request.client %}
+                                {{ row.request.client.username }}
+                                {% elif row.request.client_name %}
+                                {{ row.request.client_name }}
+                                {% else %}
+                                Public Client
+                                {% endif %}
+                            </td>
+
+                            <td class="px-5 py-4">
+                                {{ row.request.phone_number|default:"Not recorded" }}
+                            </td>
+
+                            <td class="px-5 py-4 font-bold">
+                                UGX {{ row.request.final_price|floatformat:0|intcomma }}
+                            </td>
+
+                            <td class="px-5 py-4 font-bold text-emerald-700">
+                                UGX {{ row.request.amount_paid|floatformat:0|intcomma }}
+                            </td>
+
+                            <td class="px-5 py-4 font-bold text-red-600">
+                                UGX {{ row.balance|floatformat:0|intcomma }}
+                            </td>
+
+                            <td class="px-5 py-4">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold
+                                            {% if row.request.payment_status == 'paid' %}
+                                                bg-emerald-50 text-emerald-700
+                                            {% elif row.request.payment_status == 'partial' %}
+                                                bg-amber-50 text-amber-700
+                                            {% else %}
+                                                bg-red-50 text-red-700
+                                            {% endif %}
+                                        ">
+                                    {{ row.request.get_payment_status_display }}
+                                </span>
+                            </td>
+
+                            <td class="px-5 py-4">
+                                <a href="{% url 'admin_request_detail' row.request.id %}"
+                                    class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-10 text-center">
+                <h3 class="font-extrabold text-lg text-emerald-700">
+                    No outstanding balances
+                </h3>
+                <p class="mt-2 text-sm text-slate-500">
+                    All recorded client balances are cleared.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

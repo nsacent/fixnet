@@ -6,6 +6,7 @@
 <section class="min-h-screen bg-slate-50 px-4 py-10">
     <div class="max-w-7xl mx-auto">
 
+        <!-- Header -->
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
                 <p class="text-sm font-bold text-blue-700 uppercase tracking-[0.2em]">
@@ -17,11 +18,20 @@
                 </h1>
 
                 <p class="mt-2 text-slate-600">
-                    Monitor requests, technicians, clients, and platform activity.
+                    Monitor requests, technicians, clients, payments, payouts, and platform activity.
                 </p>
             </div>
 
             <div class="flex flex-wrap gap-3">
+                <a href="{% url 'admin_reports' %}"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                    Reports
+                </a>
+                <a href="{% url 'admin_request_list' %}"
+                    class="bg-white border border-slate-200 hover:shadow-md text-slate-900 px-5 py-3 rounded-xl text-sm font-bold">
+                    Manage Requests
+                </a>
+
                 <a href="/admin/"
                     class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
                     Django Admin
@@ -31,60 +41,109 @@
                     class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
                     Verify Technicians
                 </a>
+
+
             </div>
         </div>
 
+        <div class="mt-8 bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-slate-200">
+                <h2 class="text-xl font-extrabold text-slate-900">
+                    Admin Action Center
+                </h2>
+                <p class="text-sm text-slate-500 mt-1">
+                    Important items that need attention.
+                </p>
+            </div>
+
+            {% if admin_alerts %}
+            <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 p-6">
+                {% for alert in admin_alerts %}
+                <!-- paste alert card here -->
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="p-8 text-center">
+                <h3 class="font-extrabold text-lg text-emerald-700">
+                    Everything looks good
+                </h3>
+                <p class="mt-2 text-sm text-slate-500">
+                    No urgent admin actions are pending right now.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Main KPI Tiles -->
         <div class="grid md:grid-cols-4 gap-5 mt-8">
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
                 <p class="text-sm text-slate-500">Total Requests</p>
-                <h2 class="mt-2 text-3xl font-black">{{ total_requests }}</h2>
+                <h2 class="mt-2 text-3xl font-black text-slate-900">
+                    <span id="stat-total-requests">{{ total_requests }}</span>
+                </h2>
             </div>
 
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
                 <p class="text-sm text-slate-500">Pending Requests</p>
-                <h2 class="mt-2 text-3xl font-black text-amber-600">{{ pending_requests_count }}</h2>
+                <h2 class="mt-2 text-3xl font-black text-amber-600">
+                    <span id="stat-pending-requests">{{ pending_requests_count }}</span>
+                </h2>
             </div>
 
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
                 <p class="text-sm text-slate-500">Completed Jobs</p>
-                <h2 class="mt-2 text-3xl font-black text-emerald-600">{{ completed_requests_count }}</h2>
+                <h2 class="mt-2 text-3xl font-black text-emerald-600">
+                    <span id="stat-completed-requests">{{ completed_requests_count }}</span>
+                </h2>
             </div>
 
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
                 <p class="text-sm text-slate-500">Technicians</p>
-                <h2 class="mt-2 text-3xl font-black">{{ total_technicians }}</h2>
+                <h2 class="mt-2 text-3xl font-black text-slate-900">
+                    {{ total_technicians }}
+                </h2>
             </div>
         </div>
 
+        <!-- Workflow + Technician Tiles -->
         <div class="grid md:grid-cols-4 gap-5 mt-5">
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
                 <p class="text-sm text-slate-500">Accepted Jobs</p>
-                <h2 class="mt-2 text-3xl font-black text-blue-700">{{ accepted_requests_count }}</h2>
+                <h2 class="mt-2 text-3xl font-black text-blue-700">
+                    <span id="stat-accepted-requests">{{ accepted_requests_count }}</span>
+                </h2>
             </div>
 
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
                 <p class="text-sm text-slate-500">In Progress</p>
-                <h2 class="mt-2 text-3xl font-black text-purple-700">{{ in_progress_requests_count }}</h2>
+                <h2 class="mt-2 text-3xl font-black text-purple-700">
+                    <span id="stat-in-progress-requests">{{ in_progress_requests_count }}</span>
+                </h2>
             </div>
 
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
                 <p class="text-sm text-slate-500">Verified Technicians</p>
-                <h2 class="mt-2 text-3xl font-black text-emerald-600">{{ verified_technicians }}</h2>
+                <h2 class="mt-2 text-3xl font-black text-emerald-600">
+                    {{ verified_technicians }}
+                </h2>
             </div>
 
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
                 <p class="text-sm text-slate-500">Unverified Technicians</p>
-                <h2 class="mt-2 text-3xl font-black text-red-600">{{ unverified_technicians }}</h2>
+                <h2 class="mt-2 text-3xl font-black text-red-600">
+                    {{ unverified_technicians }}
+                </h2>
             </div>
         </div>
 
+        <!-- Payment Proof Tiles -->
         <div class="grid md:grid-cols-4 gap-5 mt-5">
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-slate-500">Proofs Pending</p>
                         <h2 class="mt-2 text-3xl font-black text-amber-600">
-                            {{ pending_payment_proofs }}
+                            <span id="stat-pending-proofs">{{ pending_payment_proofs }}</span>
                         </h2>
                     </div>
 
@@ -104,7 +163,7 @@
                     <div>
                         <p class="text-sm text-slate-500">Approved Proofs</p>
                         <h2 class="mt-2 text-3xl font-black text-emerald-600">
-                            {{ approved_payment_proofs }}
+                            <span id="stat-approved-proofs">{{ approved_payment_proofs }}</span>
                         </h2>
                     </div>
 
@@ -124,7 +183,7 @@
                     <div>
                         <p class="text-sm text-slate-500">Rejected Proofs</p>
                         <h2 class="mt-2 text-3xl font-black text-red-600">
-                            {{ rejected_payment_proofs }}
+                            <span id="stat-rejected-proofs">{{ rejected_payment_proofs }}</span>
                         </h2>
                     </div>
 
@@ -144,7 +203,7 @@
                     <div>
                         <p class="text-sm text-slate-500">Not Submitted</p>
                         <h2 class="mt-2 text-3xl font-black text-slate-700">
-                            {{ not_submitted_payment_proofs }}
+                            <span id="stat-not-submitted-proofs">{{ not_submitted_payment_proofs }}</span>
                         </h2>
                     </div>
 
@@ -160,12 +219,12 @@
             </div>
         </div>
 
-
+        <!-- Revenue Tiles -->
         <div class="grid md:grid-cols-4 gap-5 mt-5">
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
                 <p class="text-sm text-slate-500">Total Final Value</p>
                 <h2 class="mt-2 text-2xl font-black text-slate-900">
-                    UGX {{ total_final_value|floatformat:0|intcomma }}
+                    UGX <span id="stat-total-final-value">{{ total_final_value|floatformat:0|intcomma }}</span>
                 </h2>
                 <p class="mt-4 text-xs text-slate-400">
                     Sum of all final prices
@@ -175,7 +234,7 @@
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
                 <p class="text-sm text-slate-500">Amount Collected</p>
                 <h2 class="mt-2 text-2xl font-black text-emerald-600">
-                    UGX {{ total_amount_paid|floatformat:0|intcomma}}
+                    UGX <span id="stat-total-amount-paid">{{ total_amount_paid|floatformat:0|intcomma }}</span>
                 </h2>
                 <p class="mt-4 text-xs text-slate-400">
                     Total recorded payments
@@ -185,7 +244,7 @@
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
                 <p class="text-sm text-slate-500">Outstanding Balance</p>
                 <h2 class="mt-2 text-2xl font-black text-red-600">
-                    UGX {{ outstanding_balance|floatformat:0|intcomma }}
+                    UGX <span id="stat-outstanding-balance">{{ outstanding_balance|floatformat:0|intcomma }}</span>
                 </h2>
                 <p class="mt-4 text-xs text-slate-400">
                     Final value minus amount paid
@@ -203,12 +262,15 @@
             </div>
         </div>
 
+        <!-- Technician Earnings Tiles -->
         <div class="grid md:grid-cols-3 gap-5 mt-5">
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
                 <p class="text-sm text-slate-500">Technician Earnings</p>
+
                 <h2 class="mt-2 text-2xl font-black text-slate-900">
-                    UGX {{ total_technician_earnings|floatformat:0|intcomma }}
+                    UGX <span id="stat-total-technician-earnings">0</span>
                 </h2>
+
                 <p class="mt-4 text-xs text-slate-400">
                     Total earnings calculated for technicians
                 </p>
@@ -216,9 +278,11 @@
 
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
                 <p class="text-sm text-slate-500">Paid Out</p>
+
                 <h2 class="mt-2 text-2xl font-black text-blue-700">
-                    UGX {{ total_technician_paid_out|floatformat:0|intcomma }}
+                    UGX <span id="stat-total-technician-paid-out">0</span>
                 </h2>
+
                 <p class="mt-4 text-xs text-slate-400">
                     Technician earnings already paid
                 </p>
@@ -226,15 +290,18 @@
 
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
                 <p class="text-sm text-slate-500">Unpaid Technician Earnings</p>
+
                 <h2 class="mt-2 text-2xl font-black text-red-600">
-                    UGX {{ total_technician_unpaid|floatformat:0|intcomma }}
+                    UGX <span id="stat-total-technician-unpaid">0</span>
                 </h2>
+
                 <p class="mt-4 text-xs text-slate-400">
                     Amount still owed to technicians
                 </p>
             </div>
         </div>
 
+        <!-- Technician Payout Queue -->
         <div class="mt-8 bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
             <div
                 class="p-6 border-b border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -246,7 +313,7 @@
                 </div>
 
                 <span class="bg-red-50 text-red-700 px-4 py-2 rounded-full text-xs font-bold">
-                    UGX {{ total_technician_unpaid|floatformat:0|intcomma }} Unpaid
+                    UGX <span id="badge-total-technician-unpaid">0</span> Unpaid
                 </span>
             </div>
 
@@ -265,6 +332,7 @@
                     </thead>
 
                     <tbody>
+                    <tbody id="unpaid-payouts-body">
                         {% for item in unpaid_payout_requests %}
                         <tr class="border-t border-slate-200">
                             <td class="px-5 py-4">
@@ -326,9 +394,10 @@
             {% endif %}
         </div>
 
-
+        <!-- Payment Proof Review Queue -->
         <div class="mt-8 bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
-            <div class="p-6 border-b border-slate-200 flex justify-between items-center">
+            <div
+                class="p-6 border-b border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                 <div>
                     <h2 class="text-xl font-extrabold">Payment Proof Review Queue</h2>
                     <p class="text-sm text-slate-500 mt-1">
@@ -337,7 +406,7 @@
                 </div>
 
                 <span class="bg-amber-50 text-amber-700 px-4 py-2 rounded-full text-xs font-bold">
-                    {{ pending_payment_proofs }} Pending
+                    <span id="badge-pending-payment-proofs">0</span> Pending
                 </span>
             </div>
 
@@ -355,7 +424,7 @@
                         </tr>
                     </thead>
 
-                    <tbody>
+                    <tbody id="pending-proofs-body">
                         {% for item in pending_proof_requests %}
                         <tr class="border-t border-slate-200">
                             <td class="px-5 py-4">
@@ -420,7 +489,7 @@
             {% endif %}
         </div>
 
-
+        <!-- Latest Requests + Technician Verification -->
         <div class="grid lg:grid-cols-[1.4fr_0.8fr] gap-6 mt-8">
 
             <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
@@ -432,7 +501,7 @@
                         </p>
                     </div>
 
-                    <a href="/admin/requests_app/servicerequest/"
+                    <a href="{% url 'admin_request_list' %}"
                         class="text-sm font-bold text-blue-700 hover:text-blue-800">
                         View all
                     </a>
@@ -453,11 +522,13 @@
                             </tr>
                         </thead>
 
-                        <tbody>
+                        <tbody id="latest-requests-body">
                             {% for item in latest_requests %}
                             <tr class="border-t border-slate-200">
                                 <td class="px-5 py-4">
-                                    <p class="font-bold text-slate-900">{{ item.title }}</p>
+                                    <p class="font-bold text-slate-900">
+                                        {{ item.title }}
+                                    </p>
                                     <p class="text-xs text-slate-500 mt-1">
                                         {% if item.category %}
                                         {{ item.category.name }}
@@ -477,18 +548,35 @@
                                     {% endif %}
                                 </td>
 
-                                <td class="px-5 py-4">{{ item.location }}</td>
+                                <td class="px-5 py-4">
+                                    {{ item.location }}
+                                </td>
 
                                 <td class="px-5 py-4">
                                     {% if item.assigned_technician %}
-                                    {{ item.assigned_technician.user.username }}
+                                    <a href="{% url 'technician_profile_detail' item.assigned_technician.id %}"
+                                        class="font-bold text-blue-700 hover:text-blue-800">
+                                        {{ item.assigned_technician.user.username }}
+                                    </a>
                                     {% else %}
                                     Not assigned
                                     {% endif %}
                                 </td>
 
                                 <td class="px-5 py-4">
-                                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700">
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold
+                                                {% if item.status == 'completed' %}
+                                                    bg-emerald-50 text-emerald-700
+                                                {% elif item.status == 'cancelled' %}
+                                                    bg-red-50 text-red-700
+                                                {% elif item.status == 'in_progress' %}
+                                                    bg-purple-50 text-purple-700
+                                                {% elif item.status == 'pending' %}
+                                                    bg-amber-50 text-amber-700
+                                                {% else %}
+                                                    bg-blue-50 text-blue-700
+                                                {% endif %}
+                                            ">
                                         {{ item.get_status_display }}
                                     </span>
                                 </td>
@@ -577,14 +665,14 @@
                                 </p>
 
                                 <p class="text-xs font-bold mt-1
-                                    {% if tech.availability_status == 'available' %}
-                                        text-emerald-600
-                                    {% elif tech.availability_status == 'busy' %}
-                                        text-amber-600
-                                    {% else %}
-                                        text-slate-400
-                                    {% endif %}
-                                ">
+                                            {% if tech.availability_status == 'available' %}
+                                                text-emerald-600
+                                            {% elif tech.availability_status == 'busy' %}
+                                                text-amber-600
+                                            {% else %}
+                                                text-slate-400
+                                            {% endif %}
+                                        ">
                                     {{ tech.get_availability_status_display }}
                                 </p>
                             </div>
@@ -616,9 +704,9 @@
 
         </div>
 
+        <!-- Quick Links -->
         <div class="grid md:grid-cols-4 gap-5 mt-8">
-            <a href="/admin/requests_app/servicerequest/"
-                class="bg-slate-900 text-white rounded-3xl p-6 hover:bg-slate-800">
+            <a href="{% url 'admin_request_list' %}" class="bg-slate-900 text-white rounded-3xl p-6 hover:bg-slate-800">
                 <p class="text-sm text-slate-300">Manage</p>
                 <h3 class="mt-2 text-xl font-extrabold">Requests</h3>
             </a>
@@ -644,5 +732,389 @@
 
     </div>
 </section>
+
+<script>
+    function formatUGX(value) {
+        return Number(value || 0).toLocaleString();
+    }
+
+    function updateText(id, value) {
+        const element = document.getElementById(id);
+
+        if (element) {
+            element.textContent = value;
+        }
+    }
+
+    async function refreshAdminStats() {
+        try {
+            const response = await fetch("{% url 'admin_live_stats' %}", {
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+
+            updateText("stat-total-requests", data.total_requests);
+            updateText("stat-pending-requests", data.pending_requests_count);
+            updateText("stat-accepted-requests", data.accepted_requests_count);
+            updateText("stat-in-progress-requests", data.in_progress_requests_count);
+            updateText("stat-completed-requests", data.completed_requests_count);
+
+            updateText("stat-pending-proofs", data.pending_payment_proofs);
+            updateText("stat-approved-proofs", data.approved_payment_proofs);
+            updateText("stat-rejected-proofs", data.rejected_payment_proofs);
+            updateText("stat-not-submitted-proofs", data.not_submitted_payment_proofs);
+
+            updateText("stat-total-final-value", formatUGX(data.total_final_value));
+            updateText("stat-total-amount-paid", formatUGX(data.total_amount_paid));
+            updateText("stat-outstanding-balance", formatUGX(data.outstanding_balance));
+
+            updateText("stat-total-technician-earnings", formatUGX(data.total_technician_earnings));
+            updateText("stat-total-technician-paid-out", formatUGX(data.total_technician_paid_out));
+            updateText("stat-total-technician-unpaid", formatUGX(data.total_technician_unpaid));
+
+            updateText("badge-total-technician-unpaid", formatUGX(data.total_technician_unpaid));
+            updateText("badge-pending-payment-proofs", data.pending_payment_proofs);
+
+        } catch (error) {
+            console.error("Live stats refresh failed:", error);
+        }
+    }
+
+    function proofBadge(status) {
+        if (status === "pending") {
+            return `<span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700">Pending</span>`;
+        }
+
+        if (status === "approved") {
+            return `<span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700">Approved</span>`;
+        }
+
+        if (status === "rejected") {
+            return `<span class="px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700">Rejected</span>`;
+        }
+
+        return `<span class="text-xs text-slate-400">None</span>`;
+    }
+
+    function statusBadge(status, label) {
+        let classes = "bg-blue-50 text-blue-700";
+
+        if (status === "completed") {
+            classes = "bg-emerald-50 text-emerald-700";
+        } else if (status === "cancelled") {
+            classes = "bg-red-50 text-red-700";
+        } else if (status === "in_progress") {
+            classes = "bg-purple-50 text-purple-700";
+        } else if (status === "pending") {
+            classes = "bg-amber-50 text-amber-700";
+        }
+
+        return `<span class="px-3 py-1 rounded-full text-xs font-bold ${classes}">${label}</span>`;
+    }
+
+    function escapeHtml(value) {
+        if (value === null || value === undefined) {
+            return "";
+        }
+
+        return String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    function renderLatestRequestRow(item) {
+        const technicianHtml = item.technician_url
+            ? `<a href="${escapeHtml(item.technician_url)}" class="font-bold text-blue-700 hover:text-blue-800">${escapeHtml(item.technician_name)}</a>`
+            : escapeHtml(item.technician_name);
+
+        let actionHtml = `
+        <a href="${escapeHtml(item.detail_url)}"
+           class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+            View
+        </a>
+    `;
+
+        if (item.status === "pending") {
+            actionHtml += `
+            <a href="${escapeHtml(item.assign_url)}"
+               class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                Assign
+            </a>
+        `;
+        } else if (item.status === "assigned") {
+            actionHtml += `
+            <span class="bg-emerald-50 text-emerald-700 border border-emerald-100 px-4 py-2 rounded-xl text-xs font-bold">
+                Assigned
+            </span>
+        `;
+        } else {
+            actionHtml += `
+            <span class="text-xs text-slate-400">
+                No action
+            </span>
+        `;
+        }
+
+        return `
+        <tr class="border-t border-slate-200">
+            <td class="px-5 py-4">
+                <p class="font-bold text-slate-900">${escapeHtml(item.title)}</p>
+                <p class="text-xs text-slate-500 mt-1">${escapeHtml(item.category)}</p>
+            </td>
+
+            <td class="px-5 py-4">
+                ${escapeHtml(item.client_name)}
+            </td>
+
+            <td class="px-5 py-4">
+                ${escapeHtml(item.location)}
+            </td>
+
+            <td class="px-5 py-4">
+                ${technicianHtml}
+            </td>
+
+            <td class="px-5 py-4">
+                ${statusBadge(item.status, escapeHtml(item.status_display))}
+            </td>
+
+            <td class="px-5 py-4">
+                ${proofBadge(item.payment_proof_status)}
+            </td>
+
+            <td class="px-5 py-4">
+                <div class="flex flex-col gap-2 items-start">
+                    ${actionHtml}
+                </div>
+            </td>
+        </tr>
+    `;
+    }
+
+    async function refreshLatestRequests() {
+        try {
+            const response = await fetch("{% url 'admin_live_latest_requests' %}", {
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+            const tbody = document.getElementById("latest-requests-body");
+
+            if (!tbody) {
+                return;
+            }
+
+            if (!data.latest_requests || data.latest_requests.length === 0) {
+                tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="px-5 py-8 text-center text-slate-500">
+                        No requests yet.
+                    </td>
+                </tr>
+            `;
+                return;
+            }
+
+            tbody.innerHTML = data.latest_requests.map(renderLatestRequestRow).join("");
+
+        } catch (error) {
+            console.error("Live latest requests refresh failed:", error);
+        }
+    }
+
+    function formatMoney(value) {
+        return Number(value || 0).toLocaleString();
+    }
+
+    function renderPendingProofRow(item) {
+        const proofHtml = item.has_payment_proof
+            ? `<span class="bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-xs font-bold">Pending Review</span>`
+            : `<span class="text-xs text-slate-400">No file</span>`;
+
+        return `
+        <tr class="border-t border-slate-200">
+            <td class="px-5 py-4">
+                <p class="font-bold text-slate-900">
+                    ${escapeHtml(item.title)}
+                </p>
+                <p class="text-xs text-slate-500 mt-1">
+                    ${escapeHtml(item.location)}
+                </p>
+            </td>
+
+            <td class="px-5 py-4">
+                ${escapeHtml(item.client_name)}
+            </td>
+
+            <td class="px-5 py-4 font-bold">
+                UGX ${formatMoney(item.final_price)}
+            </td>
+
+            <td class="px-5 py-4 font-bold text-emerald-700">
+                UGX ${formatMoney(item.amount_paid)}
+            </td>
+
+            <td class="px-5 py-4">
+                ${proofHtml}
+            </td>
+
+            <td class="px-5 py-4">
+                <a href="${escapeHtml(item.detail_url)}"
+                   class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                    Review
+                </a>
+            </td>
+        </tr>
+    `;
+    }
+
+    async function refreshPendingProofs() {
+        try {
+            const response = await fetch("{% url 'admin_live_pending_proofs' %}", {
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+            const tbody = document.getElementById("pending-proofs-body");
+
+            if (!tbody) {
+                return;
+            }
+
+            if (!data.pending_proof_requests || data.pending_proof_requests.length === 0) {
+                tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-5 py-8 text-center text-slate-500">
+                        No pending payment proofs
+                    </td>
+                </tr>
+            `;
+                return;
+            }
+
+            tbody.innerHTML = data.pending_proof_requests.map(renderPendingProofRow).join("");
+
+        } catch (error) {
+            console.error("Live pending proofs refresh failed:", error);
+        }
+    }
+
+    function renderUnpaidPayoutRow(item) {
+        const technicianHtml = item.technician_url
+            ? `<a href="${escapeHtml(item.technician_url)}" class="font-bold text-blue-700 hover:text-blue-800">${escapeHtml(item.technician_name)}</a>`
+            : escapeHtml(item.technician_name);
+
+        return `
+        <tr class="border-t border-slate-200">
+            <td class="px-5 py-4">
+                <p class="font-bold text-slate-900">
+                    ${escapeHtml(item.title)}
+                </p>
+                <p class="text-xs text-slate-500 mt-1">
+                    ${escapeHtml(item.location)}
+                </p>
+            </td>
+
+            <td class="px-5 py-4">
+                ${technicianHtml}
+            </td>
+
+            <td class="px-5 py-4 font-bold">
+                UGX ${formatMoney(item.final_price)}
+            </td>
+
+            <td class="px-5 py-4 font-bold text-emerald-700">
+                UGX ${formatMoney(item.technician_earning)}
+            </td>
+
+            <td class="px-5 py-4 text-slate-500">
+                ${escapeHtml(item.completed_at)}
+            </td>
+
+            <td class="px-5 py-4">
+                <a href="${escapeHtml(item.detail_url)}"
+                   class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                    Pay / Review
+                </a>
+            </td>
+        </tr>
+    `;
+    }
+
+    async function refreshUnpaidPayouts() {
+        try {
+            const response = await fetch("{% url 'admin_live_unpaid_payouts' %}", {
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+            const tbody = document.getElementById("unpaid-payouts-body");
+
+            if (!tbody) {
+                return;
+            }
+
+            if (!data.unpaid_payout_requests || data.unpaid_payout_requests.length === 0) {
+                tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-5 py-8 text-center text-slate-500">
+                        No unpaid technician payouts
+                    </td>
+                </tr>
+            `;
+                return;
+            }
+
+            tbody.innerHTML = data.unpaid_payout_requests.map(renderUnpaidPayoutRow).join("");
+
+        } catch (error) {
+            console.error("Live unpaid payouts refresh failed:", error);
+        }
+    }
+
+
+    refreshAdminStats();
+    refreshLatestRequests();
+    refreshPendingProofs();
+    refreshUnpaidPayouts();
+
+    setInterval(function () {
+        if (!document.hidden) {
+            refreshAdminStats();
+            refreshLatestRequests();
+            refreshPendingProofs();
+            refreshUnpaidPayouts();
+        }
+    }, 15000);
+
+</script>
 
 {% endblock %}
