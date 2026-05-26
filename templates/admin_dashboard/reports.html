@@ -57,26 +57,38 @@
                 </h2>
             </div>
 
-            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+            <a href="{% url 'admin_completed_jobs_report' %}"
+                class="block bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
                 <p class="text-sm text-slate-500">Completed Jobs</p>
                 <h2 class="mt-2 text-3xl font-black text-emerald-600">
                     {{ completed_jobs_count }}
                 </h2>
-            </div>
+                <p class="mt-4 text-xs text-slate-400">
+                    Click to view completed jobs
+                </p>
+            </a>
 
-            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+            <a href="{% url 'admin_cancelled_jobs_report' %}"
+                class="block bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
                 <p class="text-sm text-slate-500">Cancelled Jobs</p>
                 <h2 class="mt-2 text-3xl font-black text-red-600">
                     {{ cancelled_jobs_count }}
                 </h2>
-            </div>
+                <p class="mt-4 text-xs text-slate-400">
+                    Click to view cancelled requests
+                </p>
+            </a>
 
-            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+            <a href="{% url 'admin_pending_proofs_report' %}"
+                class="block bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
                 <p class="text-sm text-slate-500">Pending Proofs</p>
                 <h2 class="mt-2 text-3xl font-black text-amber-600">
                     {{ pending_payment_proofs }}
                 </h2>
-            </div>
+                <p class="mt-4 text-xs text-slate-400">
+                    Click to review uploaded proof files
+                </p>
+            </a>
         </div>
 
         <div class="grid md:grid-cols-4 gap-5 mt-5">
@@ -128,12 +140,16 @@
                 </h2>
             </div>
 
-            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+            <a href="{% url 'admin_unpaid_payouts_report' %}"
+                class="block bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
                 <p class="text-sm text-slate-500">Unpaid Payouts</p>
                 <h2 class="mt-2 text-2xl font-black text-red-600">
                     UGX {{ total_unpaid_payouts|floatformat:0|intcomma }}
                 </h2>
-            </div>
+                <p class="mt-4 text-xs text-slate-400">
+                    Click to review unpaid technician payouts
+                </p>
+            </a>
         </div>
 
         <div class="mt-8 bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">

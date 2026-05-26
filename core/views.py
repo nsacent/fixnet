@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.db.models import Q, Sum,Count
 from datetime import datetime, timedelta
 from django.http import JsonResponse, HttpResponse
+from core.report_utils import get_report_date_range
 
 from requests_app.forms import ServiceRequestForm, ClientPaymentProofForm, CancelRequestForm
 from requests_app.models import ServiceRequest, RequestActivity
@@ -1716,8 +1717,14 @@ def admin_reports_export_excel(request):
     wb.save(response)
     return response
 
+
 @staff_member_required
 def admin_outstanding_balances_report(request):
+    date_data = get_report_date_range(request)
+
+    start_date = date_data["start_date"]
+    end_date = date_data["end_date"]
+
     requests_qs = ServiceRequest.objects.select_related(
         "category",
         "client",
@@ -1725,8 +1732,13 @@ def admin_outstanding_balances_report(request):
         "assigned_technician__user",
     ).order_by("-created_at")
 
-    outstanding_requests = []
+    if start_date:
+        requests_qs = requests_qs.filter(created_at__date__gte=start_date)
 
+    if end_date:
+        requests_qs = requests_qs.filter(created_at__date__lte=end_date)
+
+    outstanding_requests = []
     total_outstanding = 0
 
     for item in requests_qs:
@@ -1742,4 +1754,205 @@ def admin_outstanding_balances_report(request):
     return render(request, "admin_dashboard/outstanding_balances.html", {
         "outstanding_requests": outstanding_requests,
         "total_outstanding": total_outstanding,
+
+        "date_filter": date_data["date_filter"],
+        "start_date": date_data["start_date_input"],
+        "end_date": date_data["end_date_input"],
+        "date_filter_options": date_data["date_filter_options"],
+    })
+
+@staff_member_required
+def admin_unpaid_payouts_report(request):
+    date_data = get_report_date_range(request)
+
+    start_date = date_data["start_date"]
+    end_date = date_data["end_date"]
+
+    unpaid_payouts = ServiceRequest.objects.select_related(
+        "category",
+        "client",
+        "assigned_technician",
+        "assigned_technician__user",
+    ).filter(
+        status=ServiceRequest.STATUS_COMPLETED,
+        technician_payout_status=ServiceRequest.PAYOUT_UNPAID,
+        technician_earning__gt=0,
+    ).order_by("-completed_at")
+
+    if start_date:
+        unpaid_payouts = unpaid_payouts.filter(completed_at__date__gte=start_date)
+
+    if end_date:
+        unpaid_payouts = unpaid_payouts.filter(completed_at__date__lte=end_date)
+
+    total_unpaid = unpaid_payouts.aggregate(
+        total=Sum("technician_earning")
+    )["total"] or 0
+
+    return render(request, "admin_dashboard/unpaid_payouts.html", {
+        "unpaid_payouts": unpaid_payouts,
+        "total_unpaid": total_unpaid,
+
+        "date_filter": date_data["date_filter"],
+        "start_date": date_data["start_date_input"],
+        "end_date": date_data["end_date_input"],
+        "date_filter_options": date_data["date_filter_options"],
+    })
+
+@staff_member_required
+def admin_pending_proofs_report(request):
+    pending_proofs = ServiceRequest.objects.select_related(
+        "category",
+        "client",
+        "assigned_technician",
+        "assigned_technician__user",
+    ).filter(
+        payment_proof_status=ServiceRequest.PROOF_PENDING
+    ).order_by("-updated_at")
+
+    total_amount_paid = pending_proofs.aggregate(
+        total=Sum("amount_paid")
+    )["total"] or 0
+
+    return render(request, "admin_dashboard/pending_proofs.html", {
+        "pending_proofs": pending_proofs,
+        "total_amount_paid": total_amount_paid,
+    })
+
+
+
+
+@staff_member_required
+def admin_completed_jobs_report(request):
+    date_data = get_report_date_range(request)
+
+    start_date = date_data["start_date"]
+    end_date = date_data["end_date"]
+
+    completed_jobs = ServiceRequest.objects.select_related(
+        "category",
+        "client",
+        "assigned_technician",
+        "assigned_technician__user",
+    ).filter(
+        status=ServiceRequest.STATUS_COMPLETED
+    ).order_by("-completed_at")
+
+    if start_date:
+        completed_jobs = completed_jobs.filter(completed_at__date__gte=start_date)
+
+    if end_date:
+        completed_jobs = completed_jobs.filter(completed_at__date__lte=end_date)
+
+    total_final_value = completed_jobs.aggregate(
+        total=Sum("final_price")
+    )["total"] or 0
+
+    total_amount_paid = completed_jobs.aggregate(
+        total=Sum("amount_paid")
+    )["total"] or 0
+
+    total_platform_commission = completed_jobs.aggregate(
+        total=Sum("platform_commission_amount")
+    )["total"] or 0
+
+    total_technician_earnings = completed_jobs.aggregate(
+        total=Sum("technician_earning")
+    )["total"] or 0
+
+    paginator = Paginator(completed_jobs, 25)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "admin_dashboard/completed_jobs.html", {
+        "completed_jobs": page_obj,
+        "page_obj": page_obj,
+        "total_matching_jobs": completed_jobs.count(),   
+             
+        "total_final_value": total_final_value,
+        "total_amount_paid": total_amount_paid,
+        "total_platform_commission": total_platform_commission,
+        "total_technician_earnings": total_technician_earnings,
+
+        "date_filter": date_data["date_filter"],
+        "start_date": date_data["start_date_input"],
+        "end_date": date_data["end_date_input"],
+        "date_filter_options": date_data["date_filter_options"],
+    })
+
+@staff_member_required
+def admin_cancelled_jobs_report(request):
+    date_data = get_report_date_range(request)
+
+    start_date = date_data["start_date"]
+    end_date = date_data["end_date"]
+
+    cancelled_jobs = ServiceRequest.objects.select_related(
+        "category",
+        "client",
+        "assigned_technician",
+        "assigned_technician__user",
+    ).filter(
+        status=ServiceRequest.STATUS_CANCELLED
+    ).order_by("-updated_at")
+
+    if start_date:
+        cancelled_jobs = cancelled_jobs.filter(updated_at__date__gte=start_date)
+
+    if end_date:
+        cancelled_jobs = cancelled_jobs.filter(updated_at__date__lte=end_date)
+
+    total_final_value = cancelled_jobs.aggregate(
+        total=Sum("final_price")
+    )["total"] or 0
+
+    total_amount_paid = cancelled_jobs.aggregate(
+        total=Sum("amount_paid")
+    )["total"] or 0
+
+    return render(request, "admin_dashboard/cancelled_jobs.html", {
+        "cancelled_jobs": cancelled_jobs,
+        "total_final_value": total_final_value,
+        "total_amount_paid": total_amount_paid,
+
+        "date_filter": date_data["date_filter"],
+        "start_date": date_data["start_date_input"],
+        "end_date": date_data["end_date_input"],
+        "date_filter_options": date_data["date_filter_options"],
+    })
+
+@staff_member_required
+def admin_pending_proofs_report(request):
+    date_data = get_report_date_range(request)
+
+    start_date = date_data["start_date"]
+    end_date = date_data["end_date"]
+
+    pending_proofs = ServiceRequest.objects.select_related(
+        "category",
+        "client",
+        "assigned_technician",
+        "assigned_technician__user",
+    ).filter(
+        payment_proof_status=ServiceRequest.PROOF_PENDING
+    ).order_by("-updated_at")
+
+    if start_date:
+        pending_proofs = pending_proofs.filter(updated_at__date__gte=start_date)
+
+    if end_date:
+        pending_proofs = pending_proofs.filter(updated_at__date__lte=end_date)
+
+    total_amount_paid = pending_proofs.aggregate(
+        total=Sum("amount_paid")
+    )["total"] or 0
+
+    return render(request, "admin_dashboard/pending_proofs.html", {
+        "pending_proofs": pending_proofs,
+        "total_amount_paid": total_amount_paid,
+
+        "date_filter": date_data["date_filter"],
+        "start_date": date_data["start_date_input"],
+        "end_date": date_data["end_date_input"],
+        "date_filter_options": date_data["date_filter_options"],
     })

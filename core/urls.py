@@ -73,5 +73,29 @@ urlpatterns = [
         views.admin_outstanding_balances_report,
         name="admin_outstanding_balances_report",
     ),
+
+    path(
+        "dashboard/admin/reports/unpaid-payouts/",
+        views.admin_unpaid_payouts_report,
+        name="admin_unpaid_payouts_report",
+    ),
+
+    path(
+        "dashboard/admin/reports/pending-proofs/",
+        views.admin_pending_proofs_report,
+        name="admin_pending_proofs_report",
+    ),
+
+    path(
+        "dashboard/admin/reports/completed-jobs/",
+        views.admin_completed_jobs_report,
+        name="admin_completed_jobs_report",
+    ),
+
+    path(
+        "dashboard/admin/reports/cancelled-jobs/",
+        views.admin_cancelled_jobs_report,
+        name="admin_cancelled_jobs_report",
+    ),
     
 ]
