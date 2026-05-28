@@ -1,0 +1,42 @@
+<style>
+    @media print {
+        body {
+            background: white !important;
+        }
+
+        nav,
+        header,
+        footer,
+        .print\:hidden {
+            display: none !important;
+        }
+
+        section {
+            background: white !important;
+            padding: 0 !important;
+        }
+
+        .shadow-sm,
+        .shadow-xl {
+            box-shadow: none !important;
+        }
+
+        .rounded-3xl {
+            border-radius: 12px !important;
+        }
+
+        table {
+            page-break-inside: auto;
+        }
+
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        a {
+            text-decoration: none !important;
+            color: inherit !important;
+        }
+    }
+</style>

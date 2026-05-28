@@ -1,0 +1,451 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <title>
+        {% block dashboard_title %}FixNet Dashboard{% endblock %}
+    </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            margin: 0;
+            background: #f8fafc;
+        }
+
+        .fixnet-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .fixnet-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.6);
+            border-radius: 999px;
+        }
+
+        .fixnet-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-900">
+
+    <div class="min-h-screen bg-slate-50">
+
+        <!-- Mobile Sidebar Overlay -->
+        <div id="mobileSidebarOverlay" class="fixed inset-0 bg-slate-950/60 z-50 hidden lg:hidden"
+            onclick="closeMobileSidebar()">
+        </div>
+
+        <!-- Mobile Sidebar -->
+        <aside id="mobileSidebar"
+            class="fixed inset-y-0 left-0 z-[60] w-80 max-w-[85vw] bg-slate-950 text-white transform -translate-x-full transition-transform duration-300 lg:hidden flex flex-col">
+
+            <div class="h-20 px-6 flex items-center justify-between border-b border-white/10">
+                <a href="{% url 'home' %}" class="flex items-center gap-3">
+                    <div
+                        class="w-11 h-11 rounded-2xl bg-blue-600 flex items-center justify-center font-black text-white shadow-lg">
+                        F
+                    </div>
+
+                    <div>
+                        <h1 class="text-xl font-black tracking-tight">
+                            Fix<span class="text-blue-400">Net</span>
+                        </h1>
+                        <p class="text-xs text-slate-400 font-bold">
+                            Service Control Center
+                        </p>
+                    </div>
+                </a>
+
+                <button type="button" onclick="closeMobileSidebar()"
+                    class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 font-black">
+                    ×
+                </button>
+            </div>
+
+            <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto fixnet-scrollbar">
+
+                {% if request.user.is_staff %}
+                <p class="px-4 pb-2 text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                    Admin
+                </p>
+
+                <a href="{% url 'admin_dashboard' %}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-200 hover:bg-white/10 hover:text-white transition">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">▣</span>
+                    <span>Overview</span>
+                </a>
+
+                <a href="{% url 'admin_request_list' %}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-200 hover:bg-white/10 hover:text-white transition">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">▤</span>
+                    <span>Requests</span>
+                </a>
+
+                <a href="{% url 'admin_reports' %}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-200 hover:bg-white/10 hover:text-white transition">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">▦</span>
+                    <span>Reports</span>
+                </a>
+
+                <a href="/admin/technicians/technicianprofile/"
+                    class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-200 hover:bg-white/10 hover:text-white transition">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">◉</span>
+                    <span>Technicians</span>
+                </a>
+
+                <a href="/admin/"
+                    class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-200 hover:bg-white/10 hover:text-white transition">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">⚙</span>
+                    <span>Django Admin</span>
+                </a>
+                {% else %}
+                <p class="px-4 pb-2 text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                    Client
+                </p>
+
+                <a href="{% url 'client_dashboard' %}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-200 hover:bg-white/10 hover:text-white transition">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">▣</span>
+                    <span>Dashboard</span>
+                </a>
+
+                <a href="{% url 'client_request_history' %}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-200 hover:bg-white/10 hover:text-white transition">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">▤</span>
+                    <span>My Requests</span>
+                </a>
+
+                <a href="{% url 'home' %}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-200 hover:bg-white/10 hover:text-white transition">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">＋</span>
+                    <span>New Request</span>
+                </a>
+                {% endif %}
+
+                <div class="pt-5 mt-5 border-t border-white/10">
+                    <a href="#"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-200 hover:bg-white/10 hover:text-white transition">
+                        <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">🔔</span>
+                        <span>Notifications</span>
+                    </a>
+
+                    <a href="/accounts/logout/"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-200 hover:bg-white/10 hover:text-white transition">
+                        <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">↩</span>
+                        <span>Logout</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Desktop Sidebar -->
+        <aside class="hidden lg:flex fixed inset-y-0 left-0 z-40 w-72 bg-slate-950 text-white flex-col">
+
+            <!-- Brand -->
+            <div class="h-20 px-6 flex items-center border-b border-white/10">
+                <a href="{% url 'home' %}" class="flex items-center gap-3">
+                    <div
+                        class="w-11 h-11 rounded-2xl bg-blue-600 flex items-center justify-center font-black text-white shadow-lg">
+                        F
+                    </div>
+
+                    <div>
+                        <h1 class="text-xl font-black tracking-tight">
+                            Fix<span class="text-blue-400">Net</span>
+                        </h1>
+                        <p class="text-xs text-slate-400 font-bold">
+                            Service Control Center
+                        </p>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto fixnet-scrollbar">
+
+                {% if request.user.is_staff %}
+                <p class="px-4 pb-2 text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                    Admin
+                </p>
+
+                <a href="{% url 'admin_dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition
+                    {% if request.resolver_match.url_name == 'admin_dashboard' %}
+                        bg-blue-600 text-white shadow-lg
+                    {% else %}
+                        text-slate-200 hover:bg-white/10 hover:text-white
+                    {% endif %}
+                    ">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">▣</span>
+                    <span>Overview</span>
+                </a>
+
+                <a href="{% url 'admin_request_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition
+                    {% if request.resolver_match.url_name == 'admin_request_list' %}
+                        bg-blue-600 text-white shadow-lg
+                    {% else %}
+                        text-slate-200 hover:bg-white/10 hover:text-white
+                    {% endif %}
+                    ">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">▤</span>
+                    <span>Requests</span>
+                </a>
+
+                <a href="{% url 'admin_reports' %}" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition
+                    {% if 'report' in request.resolver_match.url_name %}
+                        bg-blue-600 text-white shadow-lg
+                    {% else %}
+                        text-slate-200 hover:bg-white/10 hover:text-white
+                    {% endif %}
+                    ">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">▦</span>
+                    <span>Reports</span>
+                </a>
+
+                <a href="/admin/technicians/technicianprofile/"
+                    class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-200 hover:bg-white/10 hover:text-white transition">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">◉</span>
+                    <span>Technicians</span>
+                </a>
+
+                <a href="/admin/accounts/user/"
+                    class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-200 hover:bg-white/10 hover:text-white transition">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">◎</span>
+                    <span>Users</span>
+                </a>
+
+                <a href="/admin/services/servicecategory/"
+                    class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-200 hover:bg-white/10 hover:text-white transition">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">✦</span>
+                    <span>Services</span>
+                </a>
+
+                <a href="/admin/"
+                    class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-200 hover:bg-white/10 hover:text-white transition">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">⚙</span>
+                    <span>Django Admin</span>
+                </a>
+                {% else %}
+                <p class="px-4 pb-2 text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                    Client
+                </p>
+
+                <a href="{% url 'client_dashboard' %}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-200 hover:bg-white/10 hover:text-white transition">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">▣</span>
+                    <span>Dashboard</span>
+                </a>
+
+                <a href="{% url 'client_request_history' %}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-200 hover:bg-white/10 hover:text-white transition">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">▤</span>
+                    <span>My Requests</span>
+                </a>
+
+                <a href="{% url 'home' %}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-200 hover:bg-white/10 hover:text-white transition">
+                    <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">＋</span>
+                    <span>New Request</span>
+                </a>
+                {% endif %}
+
+                <div class="pt-5 mt-5 border-t border-white/10">
+                    <p class="px-4 pb-2 text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                        Account
+                    </p>
+
+                    <a href="#"
+                        class="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-200 hover:bg-white/10 hover:text-white transition">
+                        <span class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">🔔</span>
+                            <span>Notifications</span>
+                        </span>
+
+                        {% if unread_notifications_count %}
+                        <span class="bg-red-500 text-white text-[10px] px-2 py-1 rounded-full">
+                            {{ unread_notifications_count }}
+                        </span>
+                        {% endif %}
+                    </a>
+
+                    <a href="/accounts/logout/"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-200 hover:bg-white/10 hover:text-white transition">
+                        <span class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">↩</span>
+                        <span>Logout</span>
+                    </a>
+                </div>
+            </nav>
+
+            <!-- User Card -->
+            <div class="p-4 border-t border-white/10">
+                <div class="rounded-3xl bg-white/10 p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl bg-blue-600 flex items-center justify-center font-black">
+                            {{ request.user.username|slice:":1"|upper }}
+                        </div>
+
+                        <div class="min-w-0">
+                            <p class="text-sm font-black truncate">
+                                {{ request.user.username }}
+                            </p>
+                            <p class="text-xs text-slate-400">
+                                {% if request.user.is_staff %}
+                                Administrator
+                                {% else %}
+                                FixNet User
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- Main Area -->
+        <div class="lg:pl-72 min-h-screen">
+
+            <!-- Topbar -->
+            <header class="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-200">
+                <div class="h-20 px-4 md:px-8 flex items-center justify-between">
+
+                    <div class="flex items-center gap-4">
+                        <button type="button" onclick="openMobileSidebar()"
+                            class="lg:hidden w-11 h-11 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-black">
+                            ☰
+                        </button>
+
+                        <div>
+                            <p class="text-xs font-black text-blue-700 uppercase tracking-[0.22em]">
+                                {% block dashboard_label %}FixNet{% endblock %}
+                            </p>
+
+                            <h2 class="mt-1 text-lg md:text-xl font-black text-slate-900">
+                                {% block dashboard_heading %}Dashboard{% endblock %}
+                            </h2>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+
+                        {% if request.user.is_staff %}
+                        <form method="GET" action="{% url 'admin_request_list' %}"
+                            class="hidden xl:flex items-center bg-slate-100 rounded-2xl px-4 py-3 min-w-[320px]">
+                            <span class="text-slate-400 mr-3">⌕</span>
+
+                            <input type="text" name="q" value="{{ request.GET.q }}"
+                                placeholder="Search requests, clients, locations..."
+                                class="bg-transparent outline-none text-sm text-slate-700 placeholder:text-slate-400 w-full">
+                        </form>
+                        {% endif %}
+
+                        {% if request.user.is_staff %}
+                        <a href="{% url 'admin_request_list' %}"
+                            class="hidden md:inline-flex bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-2xl text-sm font-black transition">
+                            Manage Requests
+                        </a>
+                        {% else %}
+                        <a href="{% url 'home' %}"
+                            class="hidden md:inline-flex bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-2xl text-sm font-black transition">
+                            New Request
+                        </a>
+                        {% endif %}
+
+                        <a href="#"
+                            class="relative w-11 h-11 rounded-2xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition">
+                            🔔
+
+                            {% if unread_notifications_count %}
+                            <span
+                                class="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold rounded-full px-1.5">
+                                {{ unread_notifications_count }}
+                            </span>
+                            {% endif %}
+                        </a>
+
+                        <div class="hidden sm:flex items-center gap-3 bg-slate-100 rounded-2xl px-3 py-2">
+                            <div
+                                class="w-9 h-9 rounded-xl bg-blue-700 text-white flex items-center justify-center font-black">
+                                {{ request.user.username|slice:":1"|upper }}
+                            </div>
+
+                            <div>
+                                <p class="text-sm font-black leading-tight text-slate-900">
+                                    {{ request.user.username }}
+                                </p>
+                                <p class="text-xs leading-tight text-slate-500">
+                                    {% if request.user.is_staff %}
+                                    Admin
+                                    {% else %}
+                                    User
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <main class="p-4 md:p-8">
+
+                {% if messages %}
+                <div class="space-y-3 mb-6">
+                    {% for message in messages %}
+                    <div class="rounded-2xl px-5 py-4 text-sm font-bold
+                            {% if message.tags == 'success' %}
+                                bg-emerald-50 text-emerald-700 border border-emerald-100
+                            {% elif message.tags == 'error' %}
+                                bg-red-50 text-red-700 border border-red-100
+                            {% else %}
+                                bg-blue-50 text-blue-700 border border-blue-100
+                            {% endif %}
+                        ">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% block dashboard_content %}
+                {% endblock %}
+
+            </main>
+
+        </div>
+
+    </div>
+
+    <script>
+        function openMobileSidebar() {
+            const sidebar = document.getElementById("mobileSidebar");
+            const overlay = document.getElementById("mobileSidebarOverlay");
+
+            if (sidebar && overlay) {
+                overlay.classList.remove("hidden");
+                sidebar.classList.remove("-translate-x-full");
+            }
+        }
+
+        function closeMobileSidebar() {
+            const sidebar = document.getElementById("mobileSidebar");
+            const overlay = document.getElementById("mobileSidebarOverlay");
+
+            if (sidebar && overlay) {
+                sidebar.classList.add("-translate-x-full");
+                overlay.classList.add("hidden");
+            }
+        }
+    </script>
+
+</body>
+
+</html>

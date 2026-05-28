@@ -1,0 +1,54 @@
+<div class="mt-8 bg-white border border-slate-200 rounded-3xl shadow-sm p-6 print:hidden">
+    <form method="GET" class="grid md:grid-cols-5 gap-4 items-end">
+        <div>
+            <label class="text-sm font-bold text-slate-700">
+                Date Filter
+            </label>
+
+            <select name="date_filter" class="mt-2 w-full bg-slate-100 px-4 py-3 rounded-xl outline-none">
+                {% for item in date_filter_options %}
+                <option value="{{ item.value }}" {% if item.selected %}selected{% endif %}>
+                    {{ item.label }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label class="text-sm font-bold text-slate-700">
+                Start Date
+            </label>
+
+            <input type="date" name="start_date" value="{{ start_date }}"
+                class="mt-2 w-full bg-slate-100 px-4 py-3 rounded-xl outline-none">
+        </div>
+
+        <div>
+            <label class="text-sm font-bold text-slate-700">
+                End Date
+            </label>
+
+            <input type="date" name="end_date" value="{{ end_date }}"
+                class="mt-2 w-full bg-slate-100 px-4 py-3 rounded-xl outline-none">
+        </div>
+
+        <div>
+            <button class="w-full bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                Apply Filter
+            </button>
+        </div>
+
+        <div>
+            <a href="{{ request.path }}"
+                class="block text-center bg-slate-100 hover:bg-slate-200 text-slate-800 px-5 py-3 rounded-xl text-sm font-bold">
+                Reset
+            </a>
+        </div>
+    </form>
+</div>
+
+<div class="mt-5 bg-blue-50 border border-blue-100 text-blue-700 rounded-2xl px-5 py-4 text-sm font-bold">
+    Showing: {{ report_period_label|default:"This Month" }}
+    · Start: {{ start_date|default:"Auto" }}
+    · End: {{ end_date|default:"Auto" }}
+</div>

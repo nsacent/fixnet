@@ -1,757 +1,763 @@
-{% extends "base.html" %}
+{% extends "dashboard_base.html" %}
 {% load humanize %}
 
-{% block content %}
+{% block dashboard_title %}Request Detail | FixNet{% endblock %}
+{% block dashboard_label %}FixNet Admin{% endblock %}
+{% block dashboard_heading %}Request Detail{% endblock %}
 
-<section class="min-h-screen bg-slate-50 px-4 py-10">
-    <div class="max-w-6xl mx-auto">
+{% block dashboard_content %}
 
-        <div class="mb-6">
-            <a href="{% url 'admin_dashboard' %}" class="text-sm font-bold text-blue-700 hover:text-blue-800">
-                ← Back to Admin Dashboard
-            </a>
-        </div>
+<div class="max-w-6xl mx-auto">
 
-        <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+    <div class="mb-6">
+        <a href="{% url 'admin_dashboard' %}" class="text-sm font-bold text-blue-700 hover:text-blue-800">
+            ← Back to Admin Dashboard
+        </a>
+    </div>
 
-            <div class="p-6 md:p-8 border-b border-slate-200">
-                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+    <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
 
-                    <!-- Left: Request title and description -->
-                    <div class="flex-1">
-                        <p class="text-sm font-bold text-blue-700 uppercase tracking-[0.2em]">
-                            Admin Request Detail
-                        </p>
+        <div
+            class="bg-gradient-to-r from-slate-950 via-blue-950 to-blue-800 rounded-[2rem] p-6 md:p-8 text-white shadow-xl">
+            <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+                <div>
+                    <p class="text-xs font-black text-blue-200 uppercase tracking-[0.25em]">
+                        Request Control
+                    </p>
 
-                        <h1 class="mt-3 text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight">
-                            {{ service_request.title }}
-                        </h1>
+                    <h1 class="mt-3 text-3xl md:text-4xl font-black tracking-tight">
+                        {{ service_request.title }}
+                    </h1>
 
-                        <p class="mt-3 text-slate-600 leading-7 max-w-3xl">
-                            {{ service_request.description }}
-                        </p>
-                    </div>
+                    <p class="mt-3 text-blue-100 max-w-3xl leading-7">
+                        {{ service_request.description }}
+                    </p>
 
-                    <!-- Right: Status and actions -->
-                    <div class="w-full lg:w-auto flex flex-col gap-3 lg:items-end">
-
-                        <!-- Status badge -->
-                        <span class="w-fit px-4 py-2 rounded-full text-sm font-bold bg-blue-50 text-blue-700">
+                    <div class="mt-5 flex flex-wrap gap-3">
+                        <span class="bg-white/10 border border-white/10 px-4 py-2 rounded-full text-xs font-black">
                             {{ service_request.get_status_display }}
                         </span>
 
-                        <!-- Action buttons -->
-                        <div class="flex flex-col sm:flex-row lg:flex-col gap-3 w-full sm:w-auto">
+                        <span class="bg-white/10 border border-white/10 px-4 py-2 rounded-full text-xs font-black">
+                            {{ service_request.get_payment_status_display }}
+                        </span>
 
-                            {% if service_request.status == "pending" %}
-                            <a href="{% url 'admin_assign_request' service_request.id %}"
-                                class="text-center bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
-                                Assign Technician
-                            </a>
-                            {% elif service_request.status == "assigned" %}
-                            <a href="{% url 'admin_assign_request' service_request.id %}"
-                                class="text-center bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
-                                Reassign Technician
-                            </a>
-                            {% endif %}
-
-                            {% if service_request.status != "completed" and service_request.status != "cancelled" %}
-                            <a href="{% url 'admin_cancel_request' service_request.id %}"
-                                onclick="return confirm('Are you sure you want to cancel this request?');"
-                                class="text-center bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-xl text-sm font-bold">
-                                Cancel Request
-                            </a>
-                            {% endif %}
-
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-            {% if service_request.cancellation_reason %}
-            <div class="p-6 md:p-8 pt-0">
-                <div class="rounded-3xl border border-red-100 bg-red-50 p-6">
-                    <h2 class="text-xl font-extrabold text-red-700">
-                        Cancellation Reason
-                    </h2>
-
-                    <p class="mt-3 text-sm text-red-700 leading-7">
-                        {{ service_request.cancellation_reason }}
-                    </p>
-                </div>
-            </div>
-            {% endif %}
-
-            <div class="grid md:grid-cols-3 gap-5 p-6 md:p-8">
-
-                <div class="bg-slate-50 rounded-2xl p-5">
-                    <p class="text-sm text-slate-500">Client</p>
-                    <h3 class="mt-1 font-extrabold text-slate-900">
-                        {% if service_request.client %}
-                        {{ service_request.client.username }}
-                        {% elif service_request.client_name %}
-                        {{ service_request.client_name }}
-                        {% else %}
-                        Public Client
-                        {% endif %}
-                    </h3>
-                </div>
-
-                <div class="bg-slate-50 rounded-2xl p-5">
-                    <p class="text-sm text-slate-500">Phone</p>
-                    <h3 class="mt-1 font-extrabold text-slate-900">
-                        {{ service_request.phone_number }}
-                    </h3>
-
-                    <div class="mt-4 flex flex-wrap gap-2">
-                        <a href="tel:{{ service_request.phone_number }}"
-                            class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
-                            Call
-                        </a>
-
-                        <a href="https://wa.me/256{{ service_request.phone_number|slice:'-9:' }}" target="_blank"
-                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold">
-                            WhatsApp
-                        </a>
+                        <span class="bg-white/10 border border-white/10 px-4 py-2 rounded-full text-xs font-black">
+                            {{ service_request.get_payment_proof_status_display }}
+                        </span>
                     </div>
                 </div>
 
-                <div class="bg-slate-50 rounded-2xl p-5">
-                    <p class="text-sm text-slate-500">Location</p>
-                    <h3 class="mt-1 font-extrabold text-slate-900">
-                        {{ service_request.location }}
-                    </h3>
-                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="{% url 'admin_request_list' %}"
+                        class="bg-white text-slate-950 hover:bg-blue-50 px-5 py-3 rounded-2xl text-sm font-black shadow-sm">
+                        Back to Requests
+                    </a>
 
-                <div class="bg-slate-50 rounded-2xl p-5">
-                    <p class="text-sm text-slate-500">Category</p>
-                    <h3 class="mt-1 font-extrabold text-slate-900">
-                        {% if service_request.category %}
-                        {{ service_request.category.name }}
-                        {% else %}
-                        Not selected
-                        {% endif %}
-                    </h3>
-                </div>
-
-                <div class="bg-slate-50 rounded-2xl p-5">
-                    <p class="text-sm text-slate-500">Priority</p>
-                    <h3 class="mt-1 font-extrabold text-slate-900">
-                        {{ service_request.get_priority_display }}
-                    </h3>
-                </div>
-
-                <div class="bg-slate-50 rounded-2xl p-5">
-                    <p class="text-sm text-slate-500">Submitted</p>
-                    <h3 class="mt-1 font-extrabold text-slate-900">
-                        {{ service_request.created_at|date:"M d, Y H:i" }}
-                    </h3>
-                </div>
-
-                <div class="bg-slate-50 rounded-2xl p-5">
-                    <p class="text-sm text-slate-500">Estimated Price</p>
-                    <h3 class="mt-1 font-extrabold text-slate-900">
-                        UGX {{ service_request.estimated_price|floatformat:0|intcomma}}
-                    </h3>
-                </div>
-
-
-                <div class="bg-slate-50 rounded-2xl p-5">
-                    <p class="text-sm text-slate-500">Final Price</p>
-                    <h3 class="mt-1 font-extrabold text-slate-900">
-                        UGX {{ service_request.final_price|floatformat:0|intcomma}}
-                    </h3>
-                </div>
-
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-6 p-6 md:p-8 pt-0">
-
-                <div class="rounded-3xl border border-slate-200 p-6">
-                    <h2 class="text-xl font-extrabold text-slate-900">
-                        Assigned Technician
-                    </h2>
-
-                    {% if service_request.assigned_technician %}
-                    <div class="mt-5 flex items-center gap-4">
-                        {% if service_request.assigned_technician.profile_photo %}
-                        <img src="{{ service_request.assigned_technician.profile_photo.url }}"
-                            alt="{{ service_request.assigned_technician.user.username }}"
-                            class="w-14 h-14 rounded-2xl object-cover border border-slate-200">
-                        {% else %}
-                        <div
-                            class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black">
-                            {{ service_request.assigned_technician.user.username|slice:":2"|upper }}
-                        </div>
-                        {% endif %}
-
-                        <div>
-                            <h3 class="font-extrabold">
-                                <a href="{% url 'technician_profile_detail' service_request.assigned_technician.id %}"
-                                    class="text-blue-700 hover:text-blue-800">
-                                    {{ service_request.assigned_technician.user.username }}
-                                </a>
-                            </h3>
-
-                            <p class="text-sm text-slate-500">
-                                {{ service_request.assigned_technician.service_area }}
-                            </p>
-
-                            <p class="mt-1 text-sm font-bold text-amber-500">
-                                ★ {{ service_request.assigned_technician.average_rating }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="mt-5">
-                        <a href="{% url 'admin_assign_request' service_request.id %}"
-                            class="inline-block bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
-                            Reassign
-                        </a>
-                    </div>
-                    {% else %}
-                    <p class="mt-4 text-slate-500">
-                        No technician has been assigned yet.
-                    </p>
-
+                    {% if service_request.status == "pending" %}
                     <a href="{% url 'admin_assign_request' service_request.id %}"
-                        class="inline-block mt-5 bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                        class="bg-blue-500/30 hover:bg-blue-500/40 border border-white/20 text-white px-5 py-3 rounded-2xl text-sm font-black">
                         Assign Technician
+                    </a>
+                    {% elif service_request.status == "assigned" %}
+                    <a href="{% url 'admin_assign_request' service_request.id %}"
+                        class="bg-blue-500/30 hover:bg-blue-500/40 border border-white/20 text-white px-5 py-3 rounded-2xl text-sm font-black">
+                        Reassign Technician
+                    </a>
+                    {% endif %}
+
+                    {% if service_request.status != "completed" and service_request.status != "cancelled" %}
+                    <a href="{% url 'admin_cancel_request' service_request.id %}"
+                        onclick="return confirm('Are you sure you want to cancel this request?');"
+                        class="bg-red-500/30 hover:bg-red-500/40 border border-white/20 text-white px-5 py-3 rounded-2xl text-sm font-black">
+                        Cancel Request
                     </a>
                     {% endif %}
                 </div>
+            </div>
+        </div>
 
-                <div class="rounded-3xl border border-slate-200 p-6">
-                    <h2 class="text-xl font-extrabold text-slate-900">
-                        Review
-                    </h2>
+        {% if service_request.cancellation_reason %}
+        <div class="p-6 md:p-8 pt-0">
+            <div class="rounded-3xl border border-red-100 bg-red-50 p-6">
+                <h2 class="text-xl font-extrabold text-red-700">
+                    Cancellation Reason
+                </h2>
 
-                    {% if service_request.review %}
-                    <div class="mt-4 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-2xl p-4">
-                        <p class="font-bold">
-                            Rating: {{ service_request.review.rating }}/5
-                        </p>
+                <p class="mt-3 text-sm text-red-700 leading-7">
+                    {{ service_request.cancellation_reason }}
+                </p>
+            </div>
+        </div>
+        {% endif %}
 
-                        <p class="mt-2 text-sm">
-                            {{ service_request.review.comment }}
-                        </p>
-                    </div>
+        <div class="grid md:grid-cols-3 gap-5 p-6 md:p-8">
+
+            <div class="bg-slate-50 rounded-2xl p-5">
+                <p class="text-sm text-slate-500">Client</p>
+                <h3 class="mt-1 font-extrabold text-slate-900">
+                    {% if service_request.client %}
+                    {{ service_request.client.username }}
+                    {% elif service_request.client_name %}
+                    {{ service_request.client_name }}
                     {% else %}
-                    <p class="mt-4 text-slate-500">
-                        No review has been submitted yet.
-                    </p>
+                    Public Client
                     {% endif %}
-                </div>
-
+                </h3>
             </div>
 
+            <div class="bg-slate-50 rounded-2xl p-5">
+                <p class="text-sm text-slate-500">Phone</p>
+                <h3 class="mt-1 font-extrabold text-slate-900">
+                    {{ service_request.phone_number }}
+                </h3>
 
-            <div class="p-6 md:p-8 pt-0">
-                <div class="rounded-3xl border border-slate-200 p-6">
-                    <h2 class="text-xl font-extrabold text-slate-900">
-                        Admin Status Control
-                    </h2>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <a href="tel:{{ service_request.phone_number }}"
+                        class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                        Call
+                    </a>
 
-                    <p class="mt-2 text-sm text-slate-500">
-                        Manually update the request status when admin intervention is needed.
-                    </p>
-
-                    <form method="POST" action="{% url 'admin_update_request_status' service_request.id %}"
-                        class="mt-6 grid md:grid-cols-[1fr_auto] gap-4 items-end">
-                        {% csrf_token %}
-
-                        <div>
-                            <label class="text-sm font-bold text-slate-700">
-                                Request Status
-                            </label>
-                            {{ status_form.status }}
-                        </div>
-
-                        <button class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-xl text-sm font-bold">
-                            Update Status
-                        </button>
-                    </form>
+                    <a href="https://wa.me/256{{ service_request.phone_number|slice:'-9:' }}" target="_blank"
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold">
+                        WhatsApp
+                    </a>
                 </div>
             </div>
 
-            <div class="p-6 md:p-8 pt-0">
-                <div class="rounded-3xl border border-slate-200 p-6">
-                    <h2 class="text-xl font-extrabold text-slate-900">
-                        Final Price Control
-                    </h2>
-
-                    <p class="mt-2 text-sm text-slate-500">
-                        Update the real amount the client should pay after diagnosis or service completion.
-                    </p>
-
-                    <div class="grid md:grid-cols-2 gap-4 mt-5">
-                        <div class="bg-slate-50 rounded-2xl p-5">
-                            <p class="text-sm text-slate-500">Estimated Price</p>
-                            <h3 class="mt-1 font-extrabold text-slate-900">
-                                UGX {{ service_request.estimated_price|floatformat:0|intcomma }}
-                            </h3>
-                        </div>
-
-                        <div class="bg-slate-50 rounded-2xl p-5">
-                            <p class="text-sm text-slate-500">Current Final Price</p>
-                            <h3 class="mt-1 font-extrabold text-slate-900">
-                                UGX {{ service_request.final_price|floatformat:0|intcomma }}
-                            </h3>
-                        </div>
-                    </div>
-
-                    <div class="grid md:grid-cols-3 gap-4 mt-5">
-                        <div class="bg-slate-50 rounded-2xl p-5">
-                            <p class="text-sm text-slate-500">Platform Commission</p>
-                            <h3 class="mt-1 font-extrabold text-blue-700">
-                                UGX {{ service_request.platform_commission_amount|floatformat:0|intcomma }}
-                            </h3>
-                            <p class="mt-1 text-xs text-slate-400">
-                                {{ service_request.platform_commission_percent }}%
-                            </p>
-                        </div>
-
-                        <div class="bg-slate-50 rounded-2xl p-5">
-                            <p class="text-sm text-slate-500">Technician Earning</p>
-                            <h3 class="mt-1 font-extrabold text-emerald-700">
-                                UGX {{ service_request.technician_earning|floatformat:0|intcomma }}
-                            </h3>
-                        </div>
-
-                        <div class="bg-slate-50 rounded-2xl p-5">
-                            <p class="text-sm text-slate-500">Payment Status</p>
-                            <h3 class="mt-1 font-extrabold text-slate-900">
-                                {{ service_request.get_payment_status_display }}
-                            </h3>
-                        </div>
-                    </div>
-
-                    <form method="POST" action="{% url 'admin_update_final_price' service_request.id %}"
-                        class="mt-6 space-y-4">
-                        {% csrf_token %}
-
-                        <div>
-                            <label class="text-sm font-bold text-slate-700">
-                                Final Price
-                            </label>
-                            {{ price_form.final_price }}
-                        </div>
-
-                        <div>
-                            <label class="text-sm font-bold text-slate-700">
-                                Price Note
-                            </label>
-                            {{ price_form.price_note }}
-                        </div>
-
-                        <div>
-                            <label class="text-sm font-bold text-slate-700">
-                                Platform Commission %
-                            </label>
-                            {{ price_form.platform_commission_percent }}
-                        </div>
-
-                        <button class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-xl text-sm font-bold">
-                            Update Final Price
-                        </button>
-                    </form>
-                </div>
+            <div class="bg-slate-50 rounded-2xl p-5">
+                <p class="text-sm text-slate-500">Location</p>
+                <h3 class="mt-1 font-extrabold text-slate-900">
+                    {{ service_request.location }}
+                </h3>
             </div>
 
-
-            <div class="p-6 md:p-8 pt-0">
-                <div class="rounded-3xl border border-slate-200 p-6">
-                    <h2 class="text-xl font-extrabold text-slate-900">
-                        Payment Tracking
-                    </h2>
-
-                    <p class="mt-2 text-sm text-slate-500">
-                        Track payment collection manually before connecting real Mobile Money APIs.
-                    </p>
-
-                    <div class="grid md:grid-cols-4 gap-4 mt-5">
-                        <div class="bg-slate-50 rounded-2xl p-5">
-                            <p class="text-sm text-slate-500">Final Price</p>
-                            <h3 class="mt-1 font-extrabold text-slate-900">
-                                UGX {{ service_request.final_price|floatformat:0|intcomma }}
-                            </h3>
-                        </div>
-
-                        <div class="bg-slate-50 rounded-2xl p-5">
-                            <p class="text-sm text-slate-500">Amount Paid</p>
-                            <h3 class="mt-1 font-extrabold text-emerald-700">
-                                UGX {{ service_request.amount_paid|floatformat:0|intcomma }}
-                            </h3>
-                        </div>
-
-                        <div class="bg-slate-50 rounded-2xl p-5">
-                            <p class="text-sm text-slate-500">Balance</p>
-                            <h3 class="mt-1 font-extrabold text-red-600">
-                                UGX {{ service_request.balance_due|floatformat:0|intcomma }}
-                            </h3>
-                        </div>
-
-                        <div class="bg-slate-50 rounded-2xl p-5">
-                            <p class="text-sm text-slate-500">Payment Status</p>
-                            <h3 class="mt-1 font-extrabold text-slate-900">
-                                {{ service_request.get_payment_status_display }}
-                            </h3>
-                        </div>
-
-                        <div class="bg-slate-50 rounded-2xl p-5">
-                            <p class="text-sm text-slate-500">Proof Status</p>
-                            <h3 class="mt-1 font-extrabold text-slate-900">
-                                {{ service_request.get_payment_proof_status_display }}
-                            </h3>
-                        </div>
-                    </div>
-
-
-                    {% if service_request.payment_proof %}
-                    <div class="mt-5 rounded-3xl border border-slate-200 p-5">
-                        <p class="text-sm font-bold text-slate-700">Current Payment Proof</p>
-
-                        <img src="{{ service_request.payment_proof.url }}" alt="Payment proof"
-                            class="mt-4 rounded-2xl border border-slate-200 max-h-80 object-cover">
-                    </div>
-                    {% endif %}
-
-                    <form method="POST" action="{% url 'admin_update_payment' service_request.id %}"
-                        enctype="multipart/form-data" class="mt-6 space-y-4">
-                        {% csrf_token %}
-
-                        <div class="grid md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="text-sm font-bold text-slate-700">
-                                    Payment Status
-                                </label>
-                                {{ payment_form.payment_status }}
-                            </div>
-
-                            <div>
-                                <label class="text-sm font-bold text-slate-700">
-                                    Payment Method
-                                </label>
-                                {{ payment_form.payment_method }}
-                            </div>
-
-                            <div>
-                                <label class="text-sm font-bold text-slate-700">
-                                    Amount Paid
-                                </label>
-                                {{ payment_form.amount_paid }}
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="text-sm font-bold text-slate-700">
-                                Payment Note / Reference
-                            </label>
-                            {{ payment_form.payment_note }}
-                        </div>
-
-                        <div>
-                            <label class="text-sm font-bold text-slate-700">
-                                Payment Proof
-                            </label>
-                            {{ payment_form.payment_proof }}
-                        </div>
-
-                        <div>
-                            <label class="text-sm font-bold text-slate-700">
-                                Payment Proof Status
-                            </label>
-                            {{ payment_form.payment_proof_status }}
-                        </div>
-
-                        <button
-                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl text-sm font-bold">
-                            Update Payment
-                        </button>
-                    </form>
-
-                </div>
-            </div>
-
-
-            <div class="p-6 md:p-8 pt-0">
-                <div class="rounded-3xl border border-slate-200 p-6">
-                    <h2 class="text-xl font-extrabold text-slate-900">
-                        Technician Payout
-                    </h2>
-
-                    <p class="mt-2 text-sm text-slate-500">
-                        Track whether the technician has been paid their earning for this job.
-                    </p>
-
-                    <div class="grid md:grid-cols-4 gap-4 mt-5">
-                        <div class="bg-slate-50 rounded-2xl p-5">
-                            <p class="text-sm text-slate-500">Technician Earning</p>
-                            <h3 class="mt-1 font-extrabold text-emerald-700">
-                                UGX {{ service_request.technician_earning|floatformat:0|intcomma }}
-                            </h3>
-                        </div>
-
-                        <div class="bg-slate-50 rounded-2xl p-5">
-                            <p class="text-sm text-slate-500">Payout Status</p>
-                            <h3 class="mt-1 font-extrabold text-slate-900">
-                                {{ service_request.get_technician_payout_status_display }}
-                            </h3>
-                        </div>
-
-                        <div class="bg-slate-50 rounded-2xl p-5">
-                            <p class="text-sm text-slate-500">Payout Method</p>
-                            <h3 class="mt-1 font-extrabold text-slate-900">
-                                {% if service_request.technician_payout_method %}
-                                {{ service_request.get_technician_payout_method_display }}
-                                {% else %}
-                                Not selected
-                                {% endif %}
-                            </h3>
-                        </div>
-
-                        <div class="bg-slate-50 rounded-2xl p-5">
-                            <p class="text-sm text-slate-500">Payout Date</p>
-                            <h3 class="mt-1 font-extrabold text-slate-900">
-                                {% if service_request.technician_payout_date %}
-                                {{ service_request.technician_payout_date|date:"M d, Y H:i" }}
-                                {% else %}
-                                Not paid yet
-                                {% endif %}
-                            </h3>
-                        </div>
-                    </div>
-
-                    <form method="POST" action="{% url 'admin_update_technician_payout' service_request.id %}"
-                        class="mt-6 space-y-4">
-                        {% csrf_token %}
-
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-sm font-bold text-slate-700">
-                                    Payout Status
-                                </label>
-                                {{ payout_form.technician_payout_status }}
-                            </div>
-
-                            <div>
-                                <label class="text-sm font-bold text-slate-700">
-                                    Payout Method
-                                </label>
-                                {{ payout_form.technician_payout_method }}
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="text-sm font-bold text-slate-700">
-                                Payout Note / Reference
-                            </label>
-                            {{ payout_form.technician_payout_note }}
-                        </div>
-
-                        <button
-                            class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl text-sm font-bold">
-                            Update Technician Payout
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-
-            <div class="p-6 md:p-8 pt-0">
-                <div class="rounded-3xl border border-slate-200 p-6">
-                    <h2 class="text-xl font-extrabold text-slate-900">
-                        Internal Admin Notes
-                    </h2>
-
-                    <p class="mt-2 text-sm text-slate-500">
-                        These notes are only visible to FixNet admin. Clients and technicians cannot see them.
-                    </p>
-
-                    <form method="POST" action="{% url 'admin_update_request_notes' service_request.id %}"
-                        class="mt-6 space-y-4">
-                        {% csrf_token %}
-
-                        <div>
-                            <label class="text-sm font-bold text-slate-700">
-                                Notes
-                            </label>
-                            {{ notes_form.admin_notes }}
-                        </div>
-
-                        <button
-                            class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl text-sm font-bold">
-                            Save Notes
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <div class="p-6 md:p-8 pt-0">
-                <div class="rounded-3xl border border-slate-200 p-6">
-                    <h2 class="text-xl font-extrabold text-slate-900">
-                        Uploaded Image
-                    </h2>
-
-                    {% if service_request.image %}
-                    <img src="{{ service_request.image.url }}" alt="Request image"
-                        class="mt-5 rounded-2xl border border-slate-200 max-h-96 object-cover">
+            <div class="bg-slate-50 rounded-2xl p-5">
+                <p class="text-sm text-slate-500">Category</p>
+                <h3 class="mt-1 font-extrabold text-slate-900">
+                    {% if service_request.category %}
+                    {{ service_request.category.name }}
                     {% else %}
-                    <p class="mt-4 text-slate-500">
-                        No image was uploaded for this request.
-                    </p>
+                    Not selected
                     {% endif %}
-                </div>
+                </h3>
             </div>
 
-            <div class="p-6 md:p-8 pt-0">
-                <div class="rounded-3xl bg-slate-50 p-6">
-                    <h2 class="text-xl font-extrabold text-slate-900">
-                        Status Timeline
-                    </h2>
-
-                    <div class="mt-6 space-y-4">
-
-                        <div class="flex gap-3">
-                            <div
-                                class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-bold">
-                                ✓
-                            </div>
-                            <div>
-                                <p class="font-bold">Request Submitted</p>
-                                <p class="text-sm text-slate-500">
-                                    {{ service_request.created_at|date:"M d, Y H:i" }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="flex gap-3">
-                            {% if service_request.assigned_technician %}
-                            <div
-                                class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-bold">
-                                ✓</div>
-                            {% else %}
-                            <div
-                                class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold">
-                                2</div>
-                            {% endif %}
-
-                            <div>
-                                <p class="font-bold">Technician Assigned</p>
-                                <p class="text-sm text-slate-500">
-                                    {% if service_request.assigned_technician %}
-                                    {{ service_request.assigned_technician.user.username }}
-                                    {% else %}
-                                    Waiting for assignment
-                                    {% endif %}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="flex gap-3">
-                            {% if service_request.status == "in_progress" or service_request.status == "completed" %}
-                            <div
-                                class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-bold">
-                                ✓</div>
-                            {% else %}
-                            <div
-                                class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold">
-                                3</div>
-                            {% endif %}
-
-                            <div>
-                                <p class="font-bold">In Progress</p>
-                                <p class="text-sm text-slate-500">
-                                    Technician is working on the job.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="flex gap-3">
-                            {% if service_request.status == "completed" %}
-                            <div
-                                class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-bold">
-                                ✓</div>
-                            {% else %}
-                            <div
-                                class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold">
-                                4</div>
-                            {% endif %}
-
-                            <div>
-                                <p class="font-bold">Completed</p>
-                                <p class="text-sm text-slate-500">
-                                    {% if service_request.completed_at %}
-                                    {{ service_request.completed_at|date:"M d, Y H:i" }}
-                                    {% else %}
-                                    Not completed yet
-                                    {% endif %}
-                                </p>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
+            <div class="bg-slate-50 rounded-2xl p-5">
+                <p class="text-sm text-slate-500">Priority</p>
+                <h3 class="mt-1 font-extrabold text-slate-900">
+                    {{ service_request.get_priority_display }}
+                </h3>
             </div>
 
-            <div class="p-6 md:p-8 pt-0">
-                <div class="rounded-3xl border border-slate-200 p-6">
-                    <h2 class="text-xl font-extrabold text-slate-900">
-                        Activity Log ({{ activities_count }})
-                    </h2>
+            <div class="bg-slate-50 rounded-2xl p-5">
+                <p class="text-sm text-slate-500">Submitted</p>
+                <h3 class="mt-1 font-extrabold text-slate-900">
+                    {{ service_request.created_at|date:"M d, Y H:i" }}
+                </h3>
+            </div>
 
-                    <p class="mt-2 text-sm text-slate-500">
-                        System timeline of important actions performed on this request.
-                    </p>
+            <div class="bg-slate-50 rounded-2xl p-5">
+                <p class="text-sm text-slate-500">Estimated Price</p>
+                <h3 class="mt-1 font-extrabold text-slate-900">
+                    UGX {{ service_request.estimated_price|floatformat:0|intcomma}}
+                </h3>
+            </div>
 
-                    <div class="mt-6 space-y-4">
-                        {% if activities %}
-                        {% for activity in activities %}
-                        <div class="flex gap-4 border-b border-slate-100 pb-4 last:border-b-0">
-                            <div
-                                class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center font-black">
-                                ✓
-                            </div>
 
-                            <div class="flex-1">
-                                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-1">
-                                    <p class="font-extrabold text-slate-900">
-                                        {{ activity.get_action_display }}
-                                    </p>
-
-                                    <p class="text-xs text-slate-400">
-                                        {{ activity.created_at|date:"M d, Y H:i" }}
-                                    </p>
-                                </div>
-
-                                <p class="mt-1 text-sm text-slate-600">
-                                    {{ activity.message }}
-                                </p>
-
-                                <p class="mt-1 text-xs text-slate-400">
-                                    By:
-                                    {% if activity.performed_by %}
-                                    {{ activity.performed_by.username }}
-                                    {% else %}
-                                    System / Public visitor
-                                    {% endif %}
-                                </p>
-                            </div>
-                        </div>
-                        {% endfor %}
-                        {% else %}
-                        <div class="bg-slate-50 rounded-2xl p-5 text-center">
-                            <p class="text-sm text-slate-500">
-                                No activity recorded yet for this request.
-                            </p>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
+            <div class="bg-slate-50 rounded-2xl p-5">
+                <p class="text-sm text-slate-500">Final Price</p>
+                <h3 class="mt-1 font-extrabold text-slate-900">
+                    UGX {{ service_request.final_price|floatformat:0|intcomma}}
+                </h3>
             </div>
 
         </div>
+
+        <div class="grid md:grid-cols-2 gap-6 p-6 md:p-8 pt-0">
+
+            <div class="rounded-3xl border border-slate-200 p-6">
+                <h2 class="text-xl font-extrabold text-slate-900">
+                    Assigned Technician
+                </h2>
+
+                {% if service_request.assigned_technician %}
+                <div class="mt-5 flex items-center gap-4">
+                    {% if service_request.assigned_technician.profile_photo %}
+                    <img src="{{ service_request.assigned_technician.profile_photo.url }}"
+                        alt="{{ service_request.assigned_technician.user.username }}"
+                        class="w-14 h-14 rounded-2xl object-cover border border-slate-200">
+                    {% else %}
+                    <div
+                        class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black">
+                        {{ service_request.assigned_technician.user.username|slice:":2"|upper }}
+                    </div>
+                    {% endif %}
+
+                    <div>
+                        <h3 class="font-extrabold">
+                            <a href="{% url 'technician_profile_detail' service_request.assigned_technician.id %}"
+                                class="text-blue-700 hover:text-blue-800">
+                                {{ service_request.assigned_technician.user.username }}
+                            </a>
+                        </h3>
+
+                        <p class="text-sm text-slate-500">
+                            {{ service_request.assigned_technician.service_area }}
+                        </p>
+
+                        <p class="mt-1 text-sm font-bold text-amber-500">
+                            ★ {{ service_request.assigned_technician.average_rating }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <a href="{% url 'admin_assign_request' service_request.id %}"
+                        class="inline-block bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                        Reassign
+                    </a>
+                </div>
+                {% else %}
+                <p class="mt-4 text-slate-500">
+                    No technician has been assigned yet.
+                </p>
+
+                <a href="{% url 'admin_assign_request' service_request.id %}"
+                    class="inline-block mt-5 bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+                    Assign Technician
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="rounded-3xl border border-slate-200 p-6">
+                <h2 class="text-xl font-extrabold text-slate-900">
+                    Review
+                </h2>
+
+                {% if service_request.review %}
+                <div class="mt-4 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-2xl p-4">
+                    <p class="font-bold">
+                        Rating: {{ service_request.review.rating }}/5
+                    </p>
+
+                    <p class="mt-2 text-sm">
+                        {{ service_request.review.comment }}
+                    </p>
+                </div>
+                {% else %}
+                <p class="mt-4 text-slate-500">
+                    No review has been submitted yet.
+                </p>
+                {% endif %}
+            </div>
+
+        </div>
+
+
+        <div class="p-6 md:p-8 pt-0">
+            <div class="rounded-3xl border border-slate-200 p-6">
+                <h2 class="text-xl font-extrabold text-slate-900">
+                    Admin Status Control
+                </h2>
+
+                <p class="mt-2 text-sm text-slate-500">
+                    Manually update the request status when admin intervention is needed.
+                </p>
+
+                <form method="POST" action="{% url 'admin_update_request_status' service_request.id %}"
+                    class="mt-6 grid md:grid-cols-[1fr_auto] gap-4 items-end">
+                    {% csrf_token %}
+
+                    <div>
+                        <label class="text-sm font-bold text-slate-700">
+                            Request Status
+                        </label>
+                        {{ status_form.status }}
+                    </div>
+
+                    <button class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-xl text-sm font-bold">
+                        Update Status
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="p-6 md:p-8 pt-0">
+            <div class="rounded-3xl border border-slate-200 p-6">
+                <h2 class="text-xl font-extrabold text-slate-900">
+                    Final Price Control
+                </h2>
+
+                <p class="mt-2 text-sm text-slate-500">
+                    Update the real amount the client should pay after diagnosis or service completion.
+                </p>
+
+                <div class="grid md:grid-cols-2 gap-4 mt-5">
+                    <div class="bg-slate-50 rounded-2xl p-5">
+                        <p class="text-sm text-slate-500">Estimated Price</p>
+                        <h3 class="mt-1 font-extrabold text-slate-900">
+                            UGX {{ service_request.estimated_price|floatformat:0|intcomma }}
+                        </h3>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-2xl p-5">
+                        <p class="text-sm text-slate-500">Current Final Price</p>
+                        <h3 class="mt-1 font-extrabold text-slate-900">
+                            UGX {{ service_request.final_price|floatformat:0|intcomma }}
+                        </h3>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-4 mt-5">
+                    <div class="bg-slate-50 rounded-2xl p-5">
+                        <p class="text-sm text-slate-500">Platform Commission</p>
+                        <h3 class="mt-1 font-extrabold text-blue-700">
+                            UGX {{ service_request.platform_commission_amount|floatformat:0|intcomma }}
+                        </h3>
+                        <p class="mt-1 text-xs text-slate-400">
+                            {{ service_request.platform_commission_percent }}%
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-2xl p-5">
+                        <p class="text-sm text-slate-500">Technician Earning</p>
+                        <h3 class="mt-1 font-extrabold text-emerald-700">
+                            UGX {{ service_request.technician_earning|floatformat:0|intcomma }}
+                        </h3>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-2xl p-5">
+                        <p class="text-sm text-slate-500">Payment Status</p>
+                        <h3 class="mt-1 font-extrabold text-slate-900">
+                            {{ service_request.get_payment_status_display }}
+                        </h3>
+                    </div>
+                </div>
+
+                <form method="POST" action="{% url 'admin_update_final_price' service_request.id %}"
+                    class="mt-6 space-y-4">
+                    {% csrf_token %}
+
+                    <div>
+                        <label class="text-sm font-bold text-slate-700">
+                            Final Price
+                        </label>
+                        {{ price_form.final_price }}
+                    </div>
+
+                    <div>
+                        <label class="text-sm font-bold text-slate-700">
+                            Price Note
+                        </label>
+                        {{ price_form.price_note }}
+                    </div>
+
+                    <div>
+                        <label class="text-sm font-bold text-slate-700">
+                            Platform Commission %
+                        </label>
+                        {{ price_form.platform_commission_percent }}
+                    </div>
+
+                    <button class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-xl text-sm font-bold">
+                        Update Final Price
+                    </button>
+                </form>
+            </div>
+        </div>
+
+
+        <div class="p-6 md:p-8 pt-0">
+            <div class="rounded-3xl border border-slate-200 p-6">
+                <h2 class="text-xl font-extrabold text-slate-900">
+                    Payment Tracking
+                </h2>
+
+                <p class="mt-2 text-sm text-slate-500">
+                    Track payment collection manually before connecting real Mobile Money APIs.
+                </p>
+
+                <div class="grid md:grid-cols-4 gap-4 mt-5">
+                    <div class="bg-slate-50 rounded-2xl p-5">
+                        <p class="text-sm text-slate-500">Final Price</p>
+                        <h3 class="mt-1 font-extrabold text-slate-900">
+                            UGX {{ service_request.final_price|floatformat:0|intcomma }}
+                        </h3>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-2xl p-5">
+                        <p class="text-sm text-slate-500">Amount Paid</p>
+                        <h3 class="mt-1 font-extrabold text-emerald-700">
+                            UGX {{ service_request.amount_paid|floatformat:0|intcomma }}
+                        </h3>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-2xl p-5">
+                        <p class="text-sm text-slate-500">Balance</p>
+                        <h3 class="mt-1 font-extrabold text-red-600">
+                            UGX {{ service_request.balance_due|floatformat:0|intcomma }}
+                        </h3>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-2xl p-5">
+                        <p class="text-sm text-slate-500">Payment Status</p>
+                        <h3 class="mt-1 font-extrabold text-slate-900">
+                            {{ service_request.get_payment_status_display }}
+                        </h3>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-2xl p-5">
+                        <p class="text-sm text-slate-500">Proof Status</p>
+                        <h3 class="mt-1 font-extrabold text-slate-900">
+                            {{ service_request.get_payment_proof_status_display }}
+                        </h3>
+                    </div>
+                </div>
+
+
+                {% if service_request.payment_proof %}
+                <div class="mt-5 rounded-3xl border border-slate-200 p-5">
+                    <p class="text-sm font-bold text-slate-700">Current Payment Proof</p>
+
+                    <img src="{{ service_request.payment_proof.url }}" alt="Payment proof"
+                        class="mt-4 rounded-2xl border border-slate-200 max-h-80 object-cover">
+                </div>
+                {% endif %}
+
+                <form method="POST" action="{% url 'admin_update_payment' service_request.id %}"
+                    enctype="multipart/form-data" class="mt-6 space-y-4">
+                    {% csrf_token %}
+
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="text-sm font-bold text-slate-700">
+                                Payment Status
+                            </label>
+                            {{ payment_form.payment_status }}
+                        </div>
+
+                        <div>
+                            <label class="text-sm font-bold text-slate-700">
+                                Payment Method
+                            </label>
+                            {{ payment_form.payment_method }}
+                        </div>
+
+                        <div>
+                            <label class="text-sm font-bold text-slate-700">
+                                Amount Paid
+                            </label>
+                            {{ payment_form.amount_paid }}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-sm font-bold text-slate-700">
+                            Payment Note / Reference
+                        </label>
+                        {{ payment_form.payment_note }}
+                    </div>
+
+                    <div>
+                        <label class="text-sm font-bold text-slate-700">
+                            Payment Proof
+                        </label>
+                        {{ payment_form.payment_proof }}
+                    </div>
+
+                    <div>
+                        <label class="text-sm font-bold text-slate-700">
+                            Payment Proof Status
+                        </label>
+                        {{ payment_form.payment_proof_status }}
+                    </div>
+
+                    <button
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl text-sm font-bold">
+                        Update Payment
+                    </button>
+                </form>
+
+            </div>
+        </div>
+
+
+        <div class="p-6 md:p-8 pt-0">
+            <div class="rounded-3xl border border-slate-200 p-6">
+                <h2 class="text-xl font-extrabold text-slate-900">
+                    Technician Payout
+                </h2>
+
+                <p class="mt-2 text-sm text-slate-500">
+                    Track whether the technician has been paid their earning for this job.
+                </p>
+
+                <div class="grid md:grid-cols-4 gap-4 mt-5">
+                    <div class="bg-slate-50 rounded-2xl p-5">
+                        <p class="text-sm text-slate-500">Technician Earning</p>
+                        <h3 class="mt-1 font-extrabold text-emerald-700">
+                            UGX {{ service_request.technician_earning|floatformat:0|intcomma }}
+                        </h3>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-2xl p-5">
+                        <p class="text-sm text-slate-500">Payout Status</p>
+                        <h3 class="mt-1 font-extrabold text-slate-900">
+                            {{ service_request.get_technician_payout_status_display }}
+                        </h3>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-2xl p-5">
+                        <p class="text-sm text-slate-500">Payout Method</p>
+                        <h3 class="mt-1 font-extrabold text-slate-900">
+                            {% if service_request.technician_payout_method %}
+                            {{ service_request.get_technician_payout_method_display }}
+                            {% else %}
+                            Not selected
+                            {% endif %}
+                        </h3>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-2xl p-5">
+                        <p class="text-sm text-slate-500">Payout Date</p>
+                        <h3 class="mt-1 font-extrabold text-slate-900">
+                            {% if service_request.technician_payout_date %}
+                            {{ service_request.technician_payout_date|date:"M d, Y H:i" }}
+                            {% else %}
+                            Not paid yet
+                            {% endif %}
+                        </h3>
+                    </div>
+                </div>
+
+                <form method="POST" action="{% url 'admin_update_technician_payout' service_request.id %}"
+                    class="mt-6 space-y-4">
+                    {% csrf_token %}
+
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-bold text-slate-700">
+                                Payout Status
+                            </label>
+                            {{ payout_form.technician_payout_status }}
+                        </div>
+
+                        <div>
+                            <label class="text-sm font-bold text-slate-700">
+                                Payout Method
+                            </label>
+                            {{ payout_form.technician_payout_method }}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-sm font-bold text-slate-700">
+                            Payout Note / Reference
+                        </label>
+                        {{ payout_form.technician_payout_note }}
+                    </div>
+
+                    <button class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl text-sm font-bold">
+                        Update Technician Payout
+                    </button>
+                </form>
+            </div>
+        </div>
+
+
+        <div class="p-6 md:p-8 pt-0">
+            <div class="rounded-3xl border border-slate-200 p-6">
+                <h2 class="text-xl font-extrabold text-slate-900">
+                    Internal Admin Notes
+                </h2>
+
+                <p class="mt-2 text-sm text-slate-500">
+                    These notes are only visible to FixNet admin. Clients and technicians cannot see them.
+                </p>
+
+                <form method="POST" action="{% url 'admin_update_request_notes' service_request.id %}"
+                    class="mt-6 space-y-4">
+                    {% csrf_token %}
+
+                    <div>
+                        <label class="text-sm font-bold text-slate-700">
+                            Notes
+                        </label>
+                        {{ notes_form.admin_notes }}
+                    </div>
+
+                    <button class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl text-sm font-bold">
+                        Save Notes
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="p-6 md:p-8 pt-0">
+            <div class="rounded-3xl border border-slate-200 p-6">
+                <h2 class="text-xl font-extrabold text-slate-900">
+                    Uploaded Image
+                </h2>
+
+                {% if service_request.image %}
+                <img src="{{ service_request.image.url }}" alt="Request image"
+                    class="mt-5 rounded-2xl border border-slate-200 max-h-96 object-cover">
+                {% else %}
+                <p class="mt-4 text-slate-500">
+                    No image was uploaded for this request.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="p-6 md:p-8 pt-0">
+            <div class="rounded-3xl bg-slate-50 p-6">
+                <h2 class="text-xl font-extrabold text-slate-900">
+                    Status Timeline
+                </h2>
+
+                <div class="mt-6 space-y-4">
+
+                    <div class="flex gap-3">
+                        <div
+                            class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-bold">
+                            ✓
+                        </div>
+                        <div>
+                            <p class="font-bold">Request Submitted</p>
+                            <p class="text-sm text-slate-500">
+                                {{ service_request.created_at|date:"M d, Y H:i" }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        {% if service_request.assigned_technician %}
+                        <div
+                            class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-bold">
+                            ✓</div>
+                        {% else %}
+                        <div
+                            class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold">
+                            2</div>
+                        {% endif %}
+
+                        <div>
+                            <p class="font-bold">Technician Assigned</p>
+                            <p class="text-sm text-slate-500">
+                                {% if service_request.assigned_technician %}
+                                {{ service_request.assigned_technician.user.username }}
+                                {% else %}
+                                Waiting for assignment
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        {% if service_request.status == "in_progress" or service_request.status == "completed" %}
+                        <div
+                            class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-bold">
+                            ✓</div>
+                        {% else %}
+                        <div
+                            class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold">
+                            3</div>
+                        {% endif %}
+
+                        <div>
+                            <p class="font-bold">In Progress</p>
+                            <p class="text-sm text-slate-500">
+                                Technician is working on the job.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        {% if service_request.status == "completed" %}
+                        <div
+                            class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-bold">
+                            ✓</div>
+                        {% else %}
+                        <div
+                            class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold">
+                            4</div>
+                        {% endif %}
+
+                        <div>
+                            <p class="font-bold">Completed</p>
+                            <p class="text-sm text-slate-500">
+                                {% if service_request.completed_at %}
+                                {{ service_request.completed_at|date:"M d, Y H:i" }}
+                                {% else %}
+                                Not completed yet
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 md:p-8 pt-0">
+            <div class="rounded-3xl border border-slate-200 p-6">
+                <h2 class="text-xl font-extrabold text-slate-900">
+                    Activity Log ({{ activities_count }})
+                </h2>
+
+                <p class="mt-2 text-sm text-slate-500">
+                    System timeline of important actions performed on this request.
+                </p>
+
+                <div class="mt-6 space-y-4">
+                    {% if activities %}
+                    {% for activity in activities %}
+                    <div class="flex gap-4 border-b border-slate-100 pb-4 last:border-b-0">
+                        <div
+                            class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center font-black">
+                            ✓
+                        </div>
+
+                        <div class="flex-1">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-1">
+                                <p class="font-extrabold text-slate-900">
+                                    {{ activity.get_action_display }}
+                                </p>
+
+                                <p class="text-xs text-slate-400">
+                                    {{ activity.created_at|date:"M d, Y H:i" }}
+                                </p>
+                            </div>
+
+                            <p class="mt-1 text-sm text-slate-600">
+                                {{ activity.message }}
+                            </p>
+
+                            <p class="mt-1 text-xs text-slate-400">
+                                By:
+                                {% if activity.performed_by %}
+                                {{ activity.performed_by.username }}
+                                {% else %}
+                                System / Public visitor
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="bg-slate-50 rounded-2xl p-5 text-center">
+                        <p class="text-sm text-slate-500">
+                            No activity recorded yet for this request.
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
     </div>
-</section>
+</div>
 
 {% endblock %}

@@ -1,7 +1,15 @@
-import csv
 from django.core.paginator import Paginator
-from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment
+
+
+from core.export_utils import (
+    build_excel_workbook,
+    build_csv_response,
+    build_request_export_row,
+    get_request_export_headers,
+    build_report_metadata,
+    humanize_date_filter,
+)
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
@@ -9,7 +17,7 @@ from django.utils import timezone
 from django.db.models import Q, Sum,Count
 from datetime import datetime, timedelta
 from django.http import JsonResponse, HttpResponse
-from core.report_utils import get_report_date_range
+from core.report_utils import get_report_date_range, format_ugx
 
 from requests_app.forms import ServiceRequestForm, ClientPaymentProofForm, CancelRequestForm
 from requests_app.models import ServiceRequest, RequestActivity
@@ -22,8 +30,6 @@ from technicians.models import TechnicianProfile
 from technicians.forms import TechnicianProfileForm
 from django.db import models
 
-
-"""Admins"""
 from django.contrib.admin.views.decorators import staff_member_required
 from accounts.models import User
 from requests_app.admin_forms import (
@@ -33,7 +39,6 @@ from requests_app.admin_forms import (
     UpdateFinalPriceForm,
     UpdatePaymentForm,
     UpdateTechnicianPayoutForm,
-
 )
 
 
@@ -797,7 +802,6 @@ def client_cancel_request(request, request_id):
         "service_request": service_request,
     })
 
-
 @staff_member_required
 def admin_cancel_request(request, request_id):
     service_request = get_object_or_404(ServiceRequest, id=request_id)
@@ -806,12 +810,36 @@ def admin_cancel_request(request, request_id):
         messages.error(request, "Completed requests should not be cancelled.")
         return redirect("admin_request_detail", request_id=service_request.id)
 
-    service_request.status = ServiceRequest.STATUS_CANCELLED
-    service_request.save()
+    if service_request.status == ServiceRequest.STATUS_CANCELLED:
+        messages.info(request, "This request is already cancelled.")
+        return redirect("admin_request_detail", request_id=service_request.id)
 
-    messages.success(request, "Request cancelled successfully.")
-    return redirect("admin_request_detail", request_id=service_request.id)
+    if request.method == "POST":
+        cancellation_reason = request.POST.get("cancellation_reason", "").strip()
 
+        if not cancellation_reason:
+            messages.error(request, "Please provide a cancellation reason.")
+            return render(request, "admin_dashboard/cancel_request.html", {
+                "service_request": service_request,
+            })
+
+        service_request.status = ServiceRequest.STATUS_CANCELLED
+        service_request.cancellation_reason = cancellation_reason
+        service_request.save()
+
+        log_request_activity(
+            service_request,
+            RequestActivity.ACTION_CANCELLED,
+            f"Request cancelled by admin. Reason: {cancellation_reason}",
+            request.user,
+        )
+
+        messages.success(request, "Request cancelled successfully.")
+        return redirect("admin_request_detail", request_id=service_request.id)
+
+    return render(request, "admin_dashboard/cancel_request.html", {
+        "service_request": service_request,
+    })
 
 @login_required
 def technician_profile_detail(request, technician_id):
@@ -961,6 +989,7 @@ def client_request_history(request):
 @staff_member_required
 def admin_request_list(request):
     search_query = request.GET.get("q", "").strip()
+    query = request.GET.get("q", "").strip()
     status_filter = request.GET.get("status", "").strip()
     payment_status_filter = request.GET.get("payment_status", "").strip()
     proof_status_filter = request.GET.get("proof_status", "").strip()
@@ -1032,6 +1061,18 @@ def admin_request_list(request):
         for tech in technicians
     ]
 
+
+    if query:
+        requests_qs = requests_qs.filter(
+            models.Q(title__icontains=query) |
+            models.Q(description__icontains=query) |
+            models.Q(location__icontains=query) |
+            models.Q(client_name__icontains=query) |
+            models.Q(phone_number__icontains=query) |
+            models.Q(client__username__icontains=query) |
+            models.Q(assigned_technician__user__username__icontains=query)
+        )
+
     paginator = Paginator(requests_qs, 15)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
@@ -1051,6 +1092,7 @@ def admin_request_list(request):
         "payment_status_options": payment_status_options,
         "proof_status_options": proof_status_options,
         "technician_options": technician_options,
+        "query": query,
     })
 
 @staff_member_required
@@ -1429,6 +1471,35 @@ def admin_reports(request):
         item["balance"] = final_value - paid
         client_balances_list.append(item)
 
+
+    date_filter_options = [
+        {
+            "value": "today",
+            "label": "Today",
+            "selected": date_filter == "today",
+        },
+        {
+            "value": "this_week",
+            "label": "This Week",
+            "selected": date_filter == "this_week",
+        },
+        {
+            "value": "this_month",
+            "label": "This Month",
+            "selected": date_filter == "this_month",
+        },
+        {
+            "value": "this_year",
+            "label": "This Year",
+            "selected": date_filter == "this_year",
+        },
+        {
+            "value": "custom",
+            "label": "Custom Range",
+            "selected": date_filter == "custom",
+        },
+    ]
+
     return render(request, "admin_dashboard/reports.html", {
         "date_filter": date_filter,
         "start_date": start_date_input,
@@ -1449,41 +1520,24 @@ def admin_reports(request):
 
         "technician_report": technician_report,
         "client_balances": client_balances_list,
+        "date_filter_options": date_filter_options,
+        "report_period_label": humanize_date_filter(date_filter),
+
+        "total_final_value_display": format_ugx(total_final_value),
+        "total_amount_paid_display": format_ugx(total_amount_paid),
+        "outstanding_balance_display": format_ugx(outstanding_balance),
+        "total_platform_commission_display": format_ugx(total_platform_commission),
+        "total_technician_earnings_display": format_ugx(total_technician_earnings),
+        "total_paid_out_display": format_ugx(total_paid_out),
+        "total_unpaid_payouts_display": format_ugx(total_unpaid_payouts),
     })
 
 @staff_member_required
 def admin_reports_export_csv(request):
-    today = timezone.localdate()
+    date_data = get_report_date_range(request)
 
-    date_filter = request.GET.get("date_filter", "this_month")
-    start_date_input = request.GET.get("start_date", "")
-    end_date_input = request.GET.get("end_date", "")
-
-    start_date = None
-    end_date = None
-
-    if date_filter == "today":
-        start_date = today
-        end_date = today
-
-    elif date_filter == "this_week":
-        start_date = today - timedelta(days=today.weekday())
-        end_date = today
-
-    elif date_filter == "this_month":
-        start_date = today.replace(day=1)
-        end_date = today
-
-    elif date_filter == "this_year":
-        start_date = today.replace(month=1, day=1)
-        end_date = today
-
-    elif date_filter == "custom":
-        if start_date_input:
-            start_date = datetime.strptime(start_date_input, "%Y-%m-%d").date()
-
-        if end_date_input:
-            end_date = datetime.strptime(end_date_input, "%Y-%m-%d").date()
+    start_date = date_data["start_date"]
+    end_date = date_data["end_date"]
 
     requests_qs = ServiceRequest.objects.select_related(
         "category",
@@ -1498,191 +1552,61 @@ def admin_reports_export_csv(request):
     if end_date:
         requests_qs = requests_qs.filter(created_at__date__lte=end_date)
 
-    response = HttpResponse(content_type="text/csv")
-    response["Content-Disposition"] = 'attachment; filename="fixnet_reports.csv"'
+    headers = get_request_export_headers(
+        include_completed_at=True,
+        include_updated_at=True,
+    )
 
-    writer = csv.writer(response)
-
-    writer.writerow([
-        "Request ID",
-        "Title",
-        "Client",
-        "Phone",
-        "Location",
-        "Category",
-        "Technician",
-        "Status",
-        "Payment Status",
-        "Proof Status",
-        "Final Price",
-        "Amount Paid",
-        "Balance Due",
-        "Platform Commission",
-        "Technician Earning",
-        "Technician Payout Status",
-        "Created At",
-        "Completed At",
-    ])
-
-    for item in requests_qs:
-        if item.client:
-            client_name = item.client.username
-        elif item.client_name:
-            client_name = item.client_name
-        else:
-            client_name = "Public Client"
-
-        technician_name = (
-            item.assigned_technician.user.username
-            if item.assigned_technician
-            else "Not assigned"
+    rows = [
+        build_request_export_row(
+            item,
+            include_completed_at=True,
+            include_updated_at=True,
         )
-
-        category_name = item.category.name if item.category else "No category"
-
-        writer.writerow([
-            item.id,
-            item.title,
-            client_name,
-            item.phone_number,
-            item.location,
-            category_name,
-            technician_name,
-            item.get_status_display(),
-            item.get_payment_status_display(),
-            item.get_payment_proof_status_display(),
-            item.final_price or 0,
-            item.amount_paid or 0,
-            item.balance_due or 0,
-            item.platform_commission_amount or 0,
-            item.technician_earning or 0,
-            item.get_technician_payout_status_display(),
-            item.created_at.strftime("%Y-%m-%d %H:%M") if item.created_at else "",
-            item.completed_at.strftime("%Y-%m-%d %H:%M") if item.completed_at else "",
-        ])
-
-    return response
-@staff_member_required
-def admin_reports_export_excel(request):
-    today = timezone.localdate()
-
-    date_filter = request.GET.get("date_filter", "this_month")
-    start_date_input = request.GET.get("start_date", "")
-    end_date_input = request.GET.get("end_date", "")
-
-    start_date = None
-    end_date = None
-
-    if date_filter == "today":
-        start_date = today
-        end_date = today
-
-    elif date_filter == "this_week":
-        start_date = today - timedelta(days=today.weekday())
-        end_date = today
-
-    elif date_filter == "this_month":
-        start_date = today.replace(day=1)
-        end_date = today
-
-    elif date_filter == "this_year":
-        start_date = today.replace(month=1, day=1)
-        end_date = today
-
-    elif date_filter == "custom":
-        if start_date_input:
-            start_date = datetime.strptime(start_date_input, "%Y-%m-%d").date()
-
-        if end_date_input:
-            end_date = datetime.strptime(end_date_input, "%Y-%m-%d").date()
-
-    requests_qs = ServiceRequest.objects.select_related(
-        "category",
-        "client",
-        "assigned_technician",
-        "assigned_technician__user",
-    ).order_by("-created_at")
-
-    if start_date:
-        requests_qs = requests_qs.filter(created_at__date__gte=start_date)
-
-    if end_date:
-        requests_qs = requests_qs.filter(created_at__date__lte=end_date)
-
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "FixNet Reports"
-
-    headers = [
-        "Request ID",
-        "Title",
-        "Client",
-        "Phone",
-        "Location",
-        "Category",
-        "Technician",
-        "Status",
-        "Payment Status",
-        "Proof Status",
-        "Final Price",
-        "Amount Paid",
-        "Balance Due",
-        "Platform Commission",
-        "Technician Earning",
-        "Technician Payout Status",
-        "Created At",
-        "Completed At",
+        for item in requests_qs
     ]
 
-    ws.append(headers)
+    return build_csv_response(
+        filename="fixnet_reports.csv",
+        headers=headers,
+        rows=rows,
+        metadata=build_report_metadata(date_data),
+    )
 
-    header_fill = PatternFill("solid", fgColor="1E293B")
-    header_font = Font(color="FFFFFF", bold=True)
-    header_alignment = Alignment(horizontal="center", vertical="center")
+@staff_member_required
+def admin_reports_export_excel(request):
+    date_data = get_report_date_range(request)
 
-    for cell in ws[1]:
-        cell.fill = header_fill
-        cell.font = header_font
-        cell.alignment = header_alignment
+    start_date = date_data["start_date"]
+    end_date = date_data["end_date"]
 
-    for item in requests_qs:
-        if item.client:
-            client_name = item.client.username
-        elif item.client_name:
-            client_name = item.client_name
-        else:
-            client_name = "Public Client"
+    requests_qs = ServiceRequest.objects.select_related(
+        "category",
+        "client",
+        "assigned_technician",
+        "assigned_technician__user",
+    ).order_by("-created_at")
 
-        technician_name = (
-            item.assigned_technician.user.username
-            if item.assigned_technician
-            else "Not assigned"
+    if start_date:
+        requests_qs = requests_qs.filter(created_at__date__gte=start_date)
+
+    if end_date:
+        requests_qs = requests_qs.filter(created_at__date__lte=end_date)
+
+    headers = get_request_export_headers(
+        include_completed_at=True,
+        include_updated_at=True,
+    )
+
+    rows = [
+        build_request_export_row(
+            item,
+            include_completed_at=True,
+            include_updated_at=True,
         )
+        for item in requests_qs
+    ]
 
-        category_name = item.category.name if item.category else "No category"
-
-        ws.append([
-            item.id,
-            item.title,
-            client_name,
-            item.phone_number,
-            item.location,
-            category_name,
-            technician_name,
-            item.get_status_display(),
-            item.get_payment_status_display(),
-            item.get_payment_proof_status_display(),
-            float(item.final_price or 0),
-            float(item.amount_paid or 0),
-            float(item.balance_due or 0),
-            float(item.platform_commission_amount or 0),
-            float(item.technician_earning or 0),
-            item.get_technician_payout_status_display(),
-            item.created_at.strftime("%Y-%m-%d %H:%M") if item.created_at else "",
-            item.completed_at.strftime("%Y-%m-%d %H:%M") if item.completed_at else "",
-        ])
-
-    # Make columns readable
     column_widths = {
         "A": 12,
         "B": 30,
@@ -1702,12 +1626,16 @@ def admin_reports_export_excel(request):
         "P": 24,
         "Q": 20,
         "R": 20,
+        "S": 20,
     }
 
-    for column, width in column_widths.items():
-        ws.column_dimensions[column].width = width
-
-    ws.freeze_panes = "A2"
+    wb = build_excel_workbook(
+        sheet_title="FixNet Reports",
+        headers=headers,
+        rows=rows,
+        column_widths=column_widths,
+        metadata=build_report_metadata(date_data),
+    )
 
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -1716,6 +1644,7 @@ def admin_reports_export_excel(request):
 
     wb.save(response)
     return response
+
 
 
 @staff_member_required
@@ -1751,14 +1680,23 @@ def admin_outstanding_balances_report(request):
             })
             total_outstanding += balance
 
+    paginator = Paginator(outstanding_requests, 25)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
     return render(request, "admin_dashboard/outstanding_balances.html", {
-        "outstanding_requests": outstanding_requests,
+        "outstanding_requests": page_obj,
+        "page_obj": page_obj,
+        "total_matching_balances": len(outstanding_requests),
         "total_outstanding": total_outstanding,
 
         "date_filter": date_data["date_filter"],
         "start_date": date_data["start_date_input"],
         "end_date": date_data["end_date_input"],
         "date_filter_options": date_data["date_filter_options"],
+        "report_period_label": humanize_date_filter(date_data["date_filter"]),
+        "excel_url_name": "admin_outstanding_balances_export_excel",
+        "csv_url_name": "admin_outstanding_balances_export_csv",
     })
 
 @staff_member_required
@@ -1789,18 +1727,33 @@ def admin_unpaid_payouts_report(request):
         total=Sum("technician_earning")
     )["total"] or 0
 
+    paginator = Paginator(unpaid_payouts, 25)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
     return render(request, "admin_dashboard/unpaid_payouts.html", {
-        "unpaid_payouts": unpaid_payouts,
+        "unpaid_payouts": page_obj,
+        "page_obj": page_obj,
+        "total_matching_payouts": unpaid_payouts.count(),
         "total_unpaid": total_unpaid,
 
         "date_filter": date_data["date_filter"],
         "start_date": date_data["start_date_input"],
         "end_date": date_data["end_date_input"],
         "date_filter_options": date_data["date_filter_options"],
+        "report_period_label": humanize_date_filter(date_data["date_filter"]),
+        "excel_url_name": "admin_unpaid_payouts_export_excel",
+        "csv_url_name": "admin_unpaid_payouts_export_csv",
     })
+
 
 @staff_member_required
 def admin_pending_proofs_report(request):
+    date_data = get_report_date_range(request)
+
+    start_date = date_data["start_date"]
+    end_date = date_data["end_date"]
+
     pending_proofs = ServiceRequest.objects.select_related(
         "category",
         "client",
@@ -1810,15 +1763,31 @@ def admin_pending_proofs_report(request):
         payment_proof_status=ServiceRequest.PROOF_PENDING
     ).order_by("-updated_at")
 
+    if start_date:
+        pending_proofs = pending_proofs.filter(updated_at__date__gte=start_date)
+
+    if end_date:
+        pending_proofs = pending_proofs.filter(updated_at__date__lte=end_date)
+
     total_amount_paid = pending_proofs.aggregate(
         total=Sum("amount_paid")
     )["total"] or 0
 
-    return render(request, "admin_dashboard/pending_proofs.html", {
-        "pending_proofs": pending_proofs,
-        "total_amount_paid": total_amount_paid,
-    })
+    paginator = Paginator(pending_proofs, 25)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
 
+    return render(request, "admin_dashboard/pending_proofs.html", {
+        "pending_proofs": page_obj,
+        "page_obj": page_obj,
+        "total_matching_proofs": pending_proofs.count(),
+        "total_amount_paid": total_amount_paid,
+
+        "date_filter": date_data["date_filter"],
+        "start_date": date_data["start_date_input"],
+        "end_date": date_data["end_date_input"],
+        "date_filter_options": date_data["date_filter_options"],
+    })
 
 
 
@@ -1878,6 +1847,10 @@ def admin_completed_jobs_report(request):
         "start_date": date_data["start_date_input"],
         "end_date": date_data["end_date_input"],
         "date_filter_options": date_data["date_filter_options"],
+        "report_period_label": humanize_date_filter(date_data["date_filter"]),
+
+        "excel_url_name": "admin_completed_jobs_export_excel",
+        "csv_url_name": "admin_completed_jobs_export_csv",
     })
 
 @staff_member_required
@@ -1910,8 +1883,15 @@ def admin_cancelled_jobs_report(request):
         total=Sum("amount_paid")
     )["total"] or 0
 
+    paginator = Paginator(cancelled_jobs, 25)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
     return render(request, "admin_dashboard/cancelled_jobs.html", {
-        "cancelled_jobs": cancelled_jobs,
+        "cancelled_jobs": page_obj,
+        "page_obj": page_obj,
+        "total_matching_jobs": cancelled_jobs.count(),
+
         "total_final_value": total_final_value,
         "total_amount_paid": total_amount_paid,
 
@@ -1919,7 +1899,12 @@ def admin_cancelled_jobs_report(request):
         "start_date": date_data["start_date_input"],
         "end_date": date_data["end_date_input"],
         "date_filter_options": date_data["date_filter_options"],
+        "report_period_label": humanize_date_filter(date_data["date_filter"]),
+
+        "excel_url_name": "admin_cancelled_jobs_export_excel",
+        "csv_url_name": "admin_cancelled_jobs_export_csv",
     })
+
 
 @staff_member_required
 def admin_pending_proofs_report(request):
@@ -1955,4 +1940,625 @@ def admin_pending_proofs_report(request):
         "start_date": date_data["start_date_input"],
         "end_date": date_data["end_date_input"],
         "date_filter_options": date_data["date_filter_options"],
+        "report_period_label": humanize_date_filter(date_data["date_filter"]),
+        "excel_url_name": "admin_pending_proofs_export_excel",
+        "csv_url_name": "admin_pending_proofs_export_csv",
     })
+
+@staff_member_required
+def admin_completed_jobs_export_csv(request):
+    date_data = get_report_date_range(request)
+
+    start_date = date_data["start_date"]
+    end_date = date_data["end_date"]
+
+    completed_jobs = ServiceRequest.objects.select_related(
+        "category",
+        "client",
+        "assigned_technician",
+        "assigned_technician__user",
+    ).filter(
+        status=ServiceRequest.STATUS_COMPLETED
+    ).order_by("-completed_at")
+
+    if start_date:
+        completed_jobs = completed_jobs.filter(completed_at__date__gte=start_date)
+
+    if end_date:
+        completed_jobs = completed_jobs.filter(completed_at__date__lte=end_date)
+
+    headers = get_request_export_headers(
+        include_completed_at=True,
+    )
+
+    rows = [
+        build_request_export_row(
+            item,
+            include_completed_at=True,
+        )
+        for item in completed_jobs
+    ]
+
+    return build_csv_response(
+        filename="fixnet_completed_jobs.csv",
+        headers=headers,
+        rows=rows,
+        metadata=build_report_metadata(date_data),
+    )
+
+@staff_member_required
+def admin_cancelled_jobs_export_csv(request):
+    date_data = get_report_date_range(request)
+
+    start_date = date_data["start_date"]
+    end_date = date_data["end_date"]
+
+    cancelled_jobs = ServiceRequest.objects.select_related(
+        "category",
+        "client",
+        "assigned_technician",
+        "assigned_technician__user",
+    ).filter(
+        status=ServiceRequest.STATUS_CANCELLED
+    ).order_by("-updated_at")
+
+    if start_date:
+        cancelled_jobs = cancelled_jobs.filter(updated_at__date__gte=start_date)
+
+    if end_date:
+        cancelled_jobs = cancelled_jobs.filter(updated_at__date__lte=end_date)
+
+    headers = get_request_export_headers(
+        include_updated_at=True,
+    )
+
+    headers.insert(17, "Cancellation Reason")
+
+    rows = []
+
+    for item in cancelled_jobs:
+        row = build_request_export_row(
+            item,
+            include_updated_at=True,
+        )
+
+        row.insert(17, item.cancellation_reason or "")
+
+        rows.append(row)
+
+    return build_csv_response(
+        filename="fixnet_cancelled_jobs.csv",
+        headers=headers,
+        rows=rows,
+        metadata=build_report_metadata(date_data),
+    )
+
+
+@staff_member_required
+def admin_pending_proofs_export_csv(request):
+    date_data = get_report_date_range(request)
+
+    start_date = date_data["start_date"]
+    end_date = date_data["end_date"]
+
+    pending_proofs = ServiceRequest.objects.select_related(
+        "category",
+        "client",
+        "assigned_technician",
+        "assigned_technician__user",
+    ).filter(
+        payment_proof_status=ServiceRequest.PROOF_PENDING
+    ).order_by("-updated_at")
+
+    if start_date:
+        pending_proofs = pending_proofs.filter(updated_at__date__gte=start_date)
+
+    if end_date:
+        pending_proofs = pending_proofs.filter(updated_at__date__lte=end_date)
+
+    headers = get_request_export_headers(
+        include_updated_at=True,
+    )
+
+    headers.insert(17, "Has Proof File")
+
+    rows = []
+
+    for item in pending_proofs:
+        row = build_request_export_row(
+            item,
+            include_updated_at=True,
+        )
+
+        row.insert(17, "Yes" if item.payment_proof else "No")
+
+        rows.append(row)
+
+    return build_csv_response(
+        filename="fixnet_pending_proofs.csv",
+        headers=headers,
+        rows=rows,
+        metadata=build_report_metadata(date_data),
+    )
+
+
+@staff_member_required
+def admin_unpaid_payouts_export_csv(request):
+    date_data = get_report_date_range(request)
+
+    start_date = date_data["start_date"]
+    end_date = date_data["end_date"]
+
+    unpaid_payouts = ServiceRequest.objects.select_related(
+        "category",
+        "client",
+        "assigned_technician",
+        "assigned_technician__user",
+    ).filter(
+        status=ServiceRequest.STATUS_COMPLETED,
+        technician_payout_status=ServiceRequest.PAYOUT_UNPAID,
+        technician_earning__gt=0,
+    ).order_by("-completed_at")
+
+    if start_date:
+        unpaid_payouts = unpaid_payouts.filter(completed_at__date__gte=start_date)
+
+    if end_date:
+        unpaid_payouts = unpaid_payouts.filter(completed_at__date__lte=end_date)
+
+    headers = get_request_export_headers(
+        include_completed_at=True,
+    )
+
+    headers.insert(17, "Payout Method")
+
+    rows = []
+
+    for item in unpaid_payouts:
+        row = build_request_export_row(
+            item,
+            include_completed_at=True,
+        )
+
+        payout_method = (
+            item.get_technician_payout_method_display()
+            if item.technician_payout_method
+            else "Not selected"
+        )
+
+        row.insert(17, payout_method)
+
+        rows.append(row)
+
+    return build_csv_response(
+        filename="fixnet_unpaid_payouts.csv",
+        headers=headers,
+        rows=rows,
+        metadata=build_report_metadata(date_data),
+    )
+
+@staff_member_required
+def admin_outstanding_balances_export_csv(request):
+    date_data = get_report_date_range(request)
+
+    start_date = date_data["start_date"]
+    end_date = date_data["end_date"]
+
+    requests_qs = ServiceRequest.objects.select_related(
+        "category",
+        "client",
+        "assigned_technician",
+        "assigned_technician__user",
+    ).order_by("-created_at")
+
+    if start_date:
+        requests_qs = requests_qs.filter(created_at__date__gte=start_date)
+
+    if end_date:
+        requests_qs = requests_qs.filter(created_at__date__lte=end_date)
+
+    headers = get_request_export_headers()
+
+    rows = []
+
+    for item in requests_qs:
+        balance = item.balance_due or 0
+
+        if balance <= 0:
+            continue
+
+        rows.append(
+            build_request_export_row(item)
+        )
+
+    return build_csv_response(
+        filename="fixnet_outstanding_balances.csv",
+        headers=headers,
+        rows=rows,
+        metadata=build_report_metadata(date_data),
+    )
+
+@staff_member_required
+def admin_completed_jobs_export_excel(request):
+    date_data = get_report_date_range(request)
+
+    start_date = date_data["start_date"]
+    end_date = date_data["end_date"]
+
+    completed_jobs = ServiceRequest.objects.select_related(
+        "category",
+        "client",
+        "assigned_technician",
+        "assigned_technician__user",
+    ).filter(
+        status=ServiceRequest.STATUS_COMPLETED
+    ).order_by("-completed_at")
+
+    if start_date:
+        completed_jobs = completed_jobs.filter(completed_at__date__gte=start_date)
+
+    if end_date:
+        completed_jobs = completed_jobs.filter(completed_at__date__lte=end_date)
+
+    headers = get_request_export_headers(
+        include_completed_at=True,
+    )
+
+    rows = [
+        build_request_export_row(
+            item,
+            include_completed_at=True,
+        )
+        for item in completed_jobs
+    ]
+
+    column_widths = {
+        "A": 12,
+        "B": 30,
+        "C": 20,
+        "D": 18,
+        "E": 25,
+        "F": 20,
+        "G": 20,
+        "H": 16,
+        "I": 18,
+        "J": 18,
+        "K": 16,
+        "L": 16,
+        "M": 16,
+        "N": 20,
+        "O": 20,
+        "P": 24,
+        "Q": 20,
+        "R": 20,
+    }
+
+    wb = build_excel_workbook(
+        sheet_title="Completed Jobs",
+        headers=headers,
+        rows=rows,
+        column_widths=column_widths,
+        metadata=build_report_metadata(date_data),
+    )
+    
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="fixnet_completed_jobs.xlsx"'
+
+    wb.save(response)
+    return response
+
+
+@staff_member_required
+def admin_cancelled_jobs_export_excel(request):
+    date_data = get_report_date_range(request)
+
+    start_date = date_data["start_date"]
+    end_date = date_data["end_date"]
+
+    cancelled_jobs = ServiceRequest.objects.select_related(
+        "category",
+        "client",
+        "assigned_technician",
+        "assigned_technician__user",
+    ).filter(
+        status=ServiceRequest.STATUS_CANCELLED
+    ).order_by("-updated_at")
+
+    if start_date:
+        cancelled_jobs = cancelled_jobs.filter(updated_at__date__gte=start_date)
+
+    if end_date:
+        cancelled_jobs = cancelled_jobs.filter(updated_at__date__lte=end_date)
+
+    headers = get_request_export_headers(
+        include_updated_at=True,
+    )
+
+    headers.insert(17, "Cancellation Reason")
+
+    rows = []
+
+    for item in cancelled_jobs:
+        row = build_request_export_row(
+            item,
+            include_updated_at=True,
+        )
+
+        row.insert(17, item.cancellation_reason or "")
+
+        rows.append(row)
+
+    column_widths = {
+        "A": 12,
+        "B": 30,
+        "C": 20,
+        "D": 18,
+        "E": 25,
+        "F": 20,
+        "G": 20,
+        "H": 16,
+        "I": 18,
+        "J": 18,
+        "K": 16,
+        "L": 16,
+        "M": 16,
+        "N": 20,
+        "O": 20,
+        "P": 24,
+        "Q": 20,
+        "R": 35,
+        "S": 20,
+    }
+
+    wb = build_excel_workbook(
+        sheet_title="Cancelled Jobs",
+        headers=headers,
+        rows=rows,
+        column_widths=column_widths,
+        metadata=build_report_metadata(date_data),
+    )
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="fixnet_cancelled_jobs.xlsx"'
+
+    wb.save(response)
+    return response
+
+@staff_member_required
+def admin_pending_proofs_export_excel(request):
+    date_data = get_report_date_range(request)
+
+    start_date = date_data["start_date"]
+    end_date = date_data["end_date"]
+
+    pending_proofs = ServiceRequest.objects.select_related(
+        "category",
+        "client",
+        "assigned_technician",
+        "assigned_technician__user",
+    ).filter(
+        payment_proof_status=ServiceRequest.PROOF_PENDING
+    ).order_by("-updated_at")
+
+    if start_date:
+        pending_proofs = pending_proofs.filter(updated_at__date__gte=start_date)
+
+    if end_date:
+        pending_proofs = pending_proofs.filter(updated_at__date__lte=end_date)
+
+    headers = get_request_export_headers(
+        include_updated_at=True,
+    )
+
+    headers.insert(17, "Has Proof File")
+
+    rows = []
+
+    for item in pending_proofs:
+        row = build_request_export_row(
+            item,
+            include_updated_at=True,
+        )
+
+        row.insert(17, "Yes" if item.payment_proof else "No")
+
+        rows.append(row)
+
+    column_widths = {
+        "A": 12,
+        "B": 30,
+        "C": 20,
+        "D": 18,
+        "E": 25,
+        "F": 20,
+        "G": 20,
+        "H": 16,
+        "I": 18,
+        "J": 18,
+        "K": 16,
+        "L": 16,
+        "M": 16,
+        "N": 20,
+        "O": 20,
+        "P": 24,
+        "Q": 20,
+        "R": 18,
+        "S": 20,
+    }
+
+    wb = build_excel_workbook(
+        sheet_title="Pending Proofs",
+        headers=headers,
+        rows=rows,
+        column_widths=column_widths,
+        metadata=build_report_metadata(date_data),
+    )
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="fixnet_pending_proofs.xlsx"'
+
+    wb.save(response)
+    return response
+
+
+@staff_member_required
+def admin_unpaid_payouts_export_excel(request):
+    date_data = get_report_date_range(request)
+
+    start_date = date_data["start_date"]
+    end_date = date_data["end_date"]
+
+    unpaid_payouts = ServiceRequest.objects.select_related(
+        "category",
+        "client",
+        "assigned_technician",
+        "assigned_technician__user",
+    ).filter(
+        status=ServiceRequest.STATUS_COMPLETED,
+        technician_payout_status=ServiceRequest.PAYOUT_UNPAID,
+        technician_earning__gt=0,
+    ).order_by("-completed_at")
+
+    if start_date:
+        unpaid_payouts = unpaid_payouts.filter(completed_at__date__gte=start_date)
+
+    if end_date:
+        unpaid_payouts = unpaid_payouts.filter(completed_at__date__lte=end_date)
+
+    headers = get_request_export_headers(
+        include_completed_at=True,
+    )
+
+    headers.insert(17, "Payout Method")
+
+    rows = []
+
+    for item in unpaid_payouts:
+        row = build_request_export_row(
+            item,
+            include_completed_at=True,
+        )
+
+        payout_method = (
+            item.get_technician_payout_method_display()
+            if item.technician_payout_method
+            else "Not selected"
+        )
+
+        row.insert(17, payout_method)
+
+        rows.append(row)
+
+    column_widths = {
+        "A": 12,
+        "B": 30,
+        "C": 20,
+        "D": 18,
+        "E": 25,
+        "F": 20,
+        "G": 20,
+        "H": 16,
+        "I": 18,
+        "J": 18,
+        "K": 16,
+        "L": 16,
+        "M": 16,
+        "N": 20,
+        "O": 20,
+        "P": 24,
+        "Q": 20,
+        "R": 18,
+        "S": 20,
+    }
+
+    wb = build_excel_workbook(
+        sheet_title="Unpaid Payouts",
+        headers=headers,
+        rows=rows,
+        column_widths=column_widths,
+        metadata=build_report_metadata(date_data),
+    )
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="fixnet_unpaid_payouts.xlsx"'
+
+    wb.save(response)
+    return response
+
+@staff_member_required
+def admin_outstanding_balances_export_excel(request):
+    date_data = get_report_date_range(request)
+
+    start_date = date_data["start_date"]
+    end_date = date_data["end_date"]
+
+    requests_qs = ServiceRequest.objects.select_related(
+        "category",
+        "client",
+        "assigned_technician",
+        "assigned_technician__user",
+    ).order_by("-created_at")
+
+    if start_date:
+        requests_qs = requests_qs.filter(created_at__date__gte=start_date)
+
+    if end_date:
+        requests_qs = requests_qs.filter(created_at__date__lte=end_date)
+
+    headers = get_request_export_headers()
+
+    rows = []
+
+    for item in requests_qs:
+        balance = item.balance_due or 0
+
+        if balance <= 0:
+            continue
+
+        rows.append(
+            build_request_export_row(item)
+        )
+
+    column_widths = {
+        "A": 12,
+        "B": 30,
+        "C": 20,
+        "D": 18,
+        "E": 25,
+        "F": 20,
+        "G": 20,
+        "H": 16,
+        "I": 18,
+        "J": 18,
+        "K": 16,
+        "L": 16,
+        "M": 16,
+        "N": 20,
+        "O": 20,
+        "P": 24,
+        "Q": 20,
+    }
+
+    wb = build_excel_workbook(
+        sheet_title="Outstanding Balances",
+        headers=headers,
+        rows=rows,
+        column_widths=column_widths,
+        metadata=build_report_metadata(date_data),
+    )
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="fixnet_outstanding_balances.xlsx"'
+
+    wb.save(response)
+    return response

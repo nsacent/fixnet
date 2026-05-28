@@ -1,0 +1,28 @@
+<div class="flex flex-wrap gap-3 print:hidden">
+
+    <a href="{% url 'admin_reports_export_excel' %}?date_filter={{ date_filter }}&start_date={{ start_date }}&end_date={{ end_date }}"
+        class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+        Export Excel
+    </a>
+
+    <a href="{% url 'admin_reports_export_csv' %}?date_filter={{ date_filter }}&start_date={{ start_date }}&end_date={{ end_date }}"
+        class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl text-sm font-bold">
+        Export CSV
+    </a>
+
+    <button onclick="window.print()"
+        class="bg-purple-700 hover:bg-purple-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+        Print Report
+    </button>
+
+    <a href="{% url 'admin_dashboard' %}"
+        class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+        Dashboard
+    </a>
+
+    <a href="{% url 'admin_request_list' %}"
+        class="bg-white border border-slate-200 hover:shadow-md text-slate-900 px-5 py-3 rounded-xl text-sm font-bold">
+        Manage Requests
+    </a>
+
+</div>

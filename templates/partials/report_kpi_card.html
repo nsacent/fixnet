@@ -1,0 +1,15 @@
+<div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl transition">
+    <p class="text-sm text-slate-500">
+        {{ title }}
+    </p>
+
+    <h2 class="mt-2 {{ size|default:'text-3xl' }} font-black {{ color|default:'text-slate-900' }}">
+        {{ value }}
+    </h2>
+
+    {% if note %}
+    <p class="mt-4 text-xs text-slate-400">
+        {{ note }}
+    </p>
+    {% endif %}
+</div>

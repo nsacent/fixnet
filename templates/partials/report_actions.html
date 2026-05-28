@@ -1,0 +1,31 @@
+<div class="flex flex-wrap gap-3 print:hidden">
+
+    {% if excel_url_name %}
+    <a href="{% url excel_url_name %}?date_filter={{ date_filter }}&start_date={{ start_date }}&end_date={{ end_date }}"
+        class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+        Export Excel
+    </a>
+    {% endif %}
+
+    {% if csv_url_name %}
+    <a href="{% url csv_url_name %}?date_filter={{ date_filter }}&start_date={{ start_date }}&end_date={{ end_date }}"
+        class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl text-sm font-bold">
+        Export CSV
+    </a>
+    {% endif %}
+
+    <button onclick="window.print()"
+        class="bg-purple-700 hover:bg-purple-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+        Print Report
+    </button>
+
+    <a href="{% url 'admin_reports' %}?date_filter={{ date_filter }}&start_date={{ start_date }}&end_date={{ end_date }}"
+        class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-bold">
+        Back to Reports
+    </a>
+
+    <a href="{% url 'admin_dashboard' %}"
+        class="bg-white border border-slate-200 hover:shadow-md text-slate-900 px-5 py-3 rounded-xl text-sm font-bold">
+        Dashboard
+    </a>
+</div>

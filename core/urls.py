@@ -97,5 +97,64 @@ urlpatterns = [
         views.admin_cancelled_jobs_report,
         name="admin_cancelled_jobs_report",
     ),
+
+    path(
+        "dashboard/admin/reports/completed-jobs/export-csv/",
+        views.admin_completed_jobs_export_csv,
+        name="admin_completed_jobs_export_csv",
+    ),
     
+    path(
+        "dashboard/admin/reports/cancelled-jobs/export-csv/",
+        views.admin_cancelled_jobs_export_csv,
+        name="admin_cancelled_jobs_export_csv",
+    ),
+
+    path(
+        "dashboard/admin/reports/pending-proofs/export-csv/",
+        views.admin_pending_proofs_export_csv,
+        name="admin_pending_proofs_export_csv",
+    ),
+
+    path(
+        "dashboard/admin/reports/unpaid-payouts/export-csv/",
+        views.admin_unpaid_payouts_export_csv,
+        name="admin_unpaid_payouts_export_csv",
+    ),
+
+    path(
+        "dashboard/admin/reports/outstanding-balances/export-csv/",
+        views.admin_outstanding_balances_export_csv,
+        name="admin_outstanding_balances_export_csv",
+    ),
+
+    path(
+        "dashboard/admin/reports/completed-jobs/export-excel/",
+        views.admin_completed_jobs_export_excel,
+        name="admin_completed_jobs_export_excel",
+    ),
+
+    path(
+        "dashboard/admin/reports/cancelled-jobs/export-excel/",
+        views.admin_cancelled_jobs_export_excel,
+        name="admin_cancelled_jobs_export_excel",
+    ),
+
+    path(
+        "dashboard/admin/reports/pending-proofs/export-excel/",
+        views.admin_pending_proofs_export_excel,
+        name="admin_pending_proofs_export_excel",
+    ),
+
+    path(
+        "dashboard/admin/reports/unpaid-payouts/export-excel/",
+        views.admin_unpaid_payouts_export_excel,
+        name="admin_unpaid_payouts_export_excel",
+    ),
+
+    path(
+        "dashboard/admin/reports/outstanding-balances/export-excel/",
+        views.admin_outstanding_balances_export_excel,
+        name="admin_outstanding_balances_export_excel",
+    ),
 ]

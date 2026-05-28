@@ -72,3 +72,13 @@ def get_report_date_range(request, default_filter="this_month"):
         "end_date": end_date,
         "date_filter_options": date_filter_options,
     }
+
+def format_ugx(value):
+    value = value or 0
+
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        value = 0
+
+    return f"UGX {value:,.0f}"

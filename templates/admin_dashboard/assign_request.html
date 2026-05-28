@@ -1,103 +1,156 @@
-{% extends "base.html" %}
+{% extends "dashboard_base.html" %}
+{% load humanize %}
 
-{% block content %}
+{% block dashboard_title %}Assign Technician | FixNet{% endblock %}
+{% block dashboard_label %}FixNet Admin{% endblock %}
+{% block dashboard_heading %}Assign Technician{% endblock %}
 
-<section class="min-h-screen bg-slate-50 px-4 py-10">
-    <div class="max-w-3xl mx-auto">
+{% block dashboard_content %}
 
+<div class="max-w-3xl mx-auto">
+
+    <div class="mb-6">
         <a href="{% url 'admin_dashboard' %}" class="text-sm font-bold text-blue-700 hover:text-blue-800">
             ← Back to Admin Dashboard
         </a>
+    </div>
 
-        <div class="mt-6 bg-white border border-slate-200 rounded-3xl shadow-xl p-8">
-            <p class="text-sm font-bold text-blue-700 uppercase tracking-[0.2em]">
-                Assign Technician
-            </p>
+    <div
+        class="bg-gradient-to-r from-slate-950 via-blue-950 to-blue-800 rounded-[2rem] p-6 md:p-8 text-white shadow-xl">
+        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+            <div>
+                <p class="text-xs font-black text-blue-200 uppercase tracking-[0.25em]">
+                    Technician Assignment
+                </p>
 
-            <h1 class="mt-3 text-3xl font-extrabold text-slate-900">
-                {{ service_request.title }}
-            </h1>
-
-            <p class="mt-3 text-slate-600 leading-7">
-                {{ service_request.description }}
-            </p>
-
-            <div class="grid md:grid-cols-2 gap-4 mt-6">
-                <div class="bg-slate-50 rounded-2xl p-5">
-                    <p class="text-sm text-slate-500">Client</p>
-                    <h3 class="mt-1 font-extrabold">
-                        {% if service_request.client %}
-                        {{ service_request.client.username }}
-                        {% elif service_request.client_name %}
-                        {{ service_request.client_name }}
-                        {% else %}
-                        Public Client
-                        {% endif %}
-                    </h3>
-                </div>
-
-                <div class="bg-slate-50 rounded-2xl p-5">
-                    <p class="text-sm text-slate-500">Phone</p>
-                    <h3 class="mt-1 font-extrabold">
-                        {{ service_request.phone_number }}
-                    </h3>
-                </div>
-
-                <div class="bg-slate-50 rounded-2xl p-5">
-                    <p class="text-sm text-slate-500">Location</p>
-                    <h3 class="mt-1 font-extrabold">
-                        {{ service_request.location }}
-                    </h3>
-                </div>
-
-                <div class="bg-slate-50 rounded-2xl p-5">
-                    <p class="text-sm text-slate-500">Status</p>
-                    <h3 class="mt-1 font-extrabold">
-                        {{ service_request.get_status_display }}
-                    </h3>
-                </div>
-            </div>
-
-            {% if service_request.image %}
-            <div class="mt-6 rounded-3xl border border-slate-200 p-5">
-                <p class="text-sm font-bold text-slate-700">Uploaded Image</p>
-                <img src="{{ service_request.image.url }}" alt="Request image"
-                    class="mt-4 rounded-2xl border border-slate-200 max-h-80 object-cover">
-            </div>
-            {% endif %}
-
-            <form method="POST" class="mt-8 space-y-5">
-                {% csrf_token %}
-
-                <div>
-                    <label class="text-sm font-bold text-slate-700">
-                        Verified Technician
-                    </label>
-                    <div class="relative">
-                        {{ form.technician }}
-
-                        <div class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
-                            ▼
-                        </div>
-                    </div>
-                    <p class="mt-2 text-xs text-slate-500">
-                        Only verified technicians marked as available are shown here.
-                    </p>
-
-                    {% for error in form.technician.errors %}
-                    <p class="mt-1 text-sm text-red-600">
-                        {{ error }}
-                    </p>
-                    {% endfor %}
-                </div>
-
-                <button class="w-full bg-blue-700 hover:bg-blue-800 text-white py-3 rounded-xl font-bold">
+                <h1 class="mt-3 text-3xl md:text-4xl font-black tracking-tight">
                     Assign Technician
-                </button>
-            </form>
+                </h1>
+
+                <p class="mt-3 text-blue-100 max-w-2xl leading-7">
+                    Select the best available technician for this service request and move the job into the active
+                    workflow.
+                </p>
+            </div>
+            <a href="{% url 'admin_request_detail' service_request.id %}"
+                class="bg-white text-slate-950 hover:bg-blue-50 px-5 py-3 rounded-2xl text-sm font-black shadow-sm">
+                Back to Request
+            </a>
+
+        </div>
+    </div>
+
+
+
+    <div class="mt-6 bg-white border border-slate-200 rounded-3xl shadow-xl p-8">
+        <p class="text-sm font-bold text-blue-700 uppercase tracking-[0.2em]">
+            Assign Technician
+        </p>
+
+        <h1 class="mt-3 text-3xl font-extrabold text-slate-900">
+            {{ service_request.title }}
+        </h1>
+
+        <p class="mt-3 text-slate-600 leading-7">
+            {{ service_request.description }}
+        </p>
+
+        <div class="grid md:grid-cols-2 gap-4 mt-6">
+            <div class="bg-slate-50 rounded-2xl p-5">
+                <p class="text-sm text-slate-500">Client</p>
+                <h3 class="mt-1 font-extrabold">
+                    {% if service_request.client %}
+                    {{ service_request.client.username }}
+                    {% elif service_request.client_name %}
+                    {{ service_request.client_name }}
+                    {% else %}
+                    Public Client
+                    {% endif %}
+                </h3>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl p-5">
+                <p class="text-sm text-slate-500">Phone</p>
+                <h3 class="mt-1 font-extrabold">
+                    {{ service_request.phone_number }}
+                </h3>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl p-5">
+                <p class="text-sm text-slate-500">Location</p>
+                <h3 class="mt-1 font-extrabold">
+                    {{ service_request.location }}
+                </h3>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl p-5">
+                <p class="text-sm text-slate-500">Status</p>
+                <h3 class="mt-1 font-extrabold">
+                    {{ service_request.get_status_display }}
+                </h3>
+            </div>
         </div>
 
+        {% if service_request.image %}
+        <div class="mt-6 rounded-3xl border border-slate-200 p-5">
+            <p class="text-sm font-bold text-slate-700">Uploaded Image</p>
+            <img src="{{ service_request.image.url }}" alt="Request image"
+                class="mt-4 rounded-2xl border border-slate-200 max-h-80 object-cover">
+        </div>
+        {% endif %}
+
+        <div class="mt-8 bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-slate-200">
+                <h2 class="text-xl font-black text-slate-950">
+                    Assignment Details
+                </h2>
+                <p class="text-sm text-slate-500 mt-1">
+                    Choose a technician and confirm assignment.
+                </p>
+            </div>
+
+            <div class="p-6 md:p-8">
+                <form method="POST" class="mt-8 space-y-5">
+                    {% csrf_token %}
+
+                    <div>
+                        <label class="text-sm font-bold text-slate-700">
+                            Verified Technician
+                        </label>
+                        <div class="relative">
+                            {{ form.technician }}
+
+                            <div class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+                                ▼
+                            </div>
+                        </div>
+                        <p class="mt-2 text-xs text-slate-500">
+                            Only verified technicians marked as available are shown here.
+                        </p>
+
+                        {% for error in form.technician.errors %}
+                        <p class="mt-1 text-sm text-red-600">
+                            {{ error }}
+                        </p>
+                        {% endfor %}
+                    </div>
+
+                    <button type="submit"
+                        class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-2xl text-sm font-black">
+                        Assign Technician
+                    </button>
+
+                    <a href="{% url 'admin_request_detail' service_request.id %}"
+                        class="bg-slate-100 hover:bg-slate-200 text-slate-800 px-6 py-3 rounded-2xl text-sm font-black">
+                        Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+
+
     </div>
-</section>
+
+</div>
 
 {% endblock %}
